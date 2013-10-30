@@ -49,7 +49,7 @@ Here is a more complex configuration with user credentials and a simple javascri
             "host": "carhost",
             "port": carport,
             "db": "test", 
-            "collection": "cars",
+            "collection": "car",
             "credentials": {
                 "username": "riveruser",
                 "password": "rivauser"
