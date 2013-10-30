@@ -89,6 +89,7 @@ Remarks
 Before you can use the ArangoDB river, you must ask ArangoDB to switch into the replication logger mode.
 To do so, open an ArangoDB shell and run the following commands:
 
+    db._useDatabase("<DATABASE_NAME>");
     require("org/arangodb/replication").logger.properties({autoStart: true, maxEvents: 1048576 });
     require("org/arangodb/replication").logger.start();
 

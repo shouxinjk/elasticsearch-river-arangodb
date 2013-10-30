@@ -360,9 +360,9 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	private String getReplogUri() {
         ServerAddress activeServerAddress = this.getActiveMaster();
         
-        String uri = HTTP_PROTOCOL + "://" + activeServerAddress.getHost();
-        uri += ":" + activeServerAddress.getPort();
-        uri += "/_api/replication/dump?collection=";
+        String uri = HTTP_PROTOCOL + "://";
+        uri += activeServerAddress.getHost() + ":" + activeServerAddress.getPort();
+        uri += "/_db/" + this.arangoDb + "/_api/replication/dump?collection=";
         uri += this.arangoCollection + "&from=";
         
 		return uri;
