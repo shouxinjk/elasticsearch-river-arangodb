@@ -87,7 +87,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	public final static String THROTTLE_SIZE_FIELD = "throttle_size";
 	public final static String BULK_SIZE_FIELD = "bulk_size";
 	public final static String BULK_TIMEOUT_FIELD = "bulk_timeout";
-	public final static String LAST_TICK_FIELD = "_last_ts";
+	public final static String LAST_TICK_FIELD = "_last_tick";
 	public final static String REPLOG_ENTRY_UNDEFINED = "undefined";
 	public final static String REPLOG_FIELD_KEY = "key";
 	public final static String REPLOG_FIELD_TICK = "tick";
@@ -267,7 +267,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	@Override
 	public void start() {
 		for (ServerAddress server : this.arangoServers) {
-			this.logger.info("Using arangodb server(s): host [{}], port [{}]", server.getHost(), server.getPort());
+			this.logger.info("using arangodb server(s): host [{}], port [{}]", server.getHost(), server.getPort());
 		}
 		
 		this.logger.info("starting arangodb stream. options: throttlesize [{}], filter [{}], db [{}], collection [{}], script [{}], indexing to [{}]/[{}]",
@@ -292,7 +292,9 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			}
 		}
 		
-		Thread slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(new Slurper(arangoServers));
+		String lastProcessedTick = this.fetchLastTick(this.arangoCollection);
+		
+		Thread slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(new Slurper(arangoServers, lastProcessedTick));
 			
 		this.slurperThreads.add(slurperThread);
 
@@ -329,7 +331,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			try {
 				this.arangoHttpClient.close();
 			} catch (Exception ex) {
-				this.logger.error("Http client close threw an exception", ex);
+				this.logger.error("Http client method close threw an exception", ex);
 			}
 		}
 	}
@@ -372,6 +374,35 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		return "DELETE".equals(op);
 	}
 	
+	private String fetchLastTick(final String namespace) {
+		String lastTick = null;
+		
+		this.logger.info("fetching last tick for collection {}", namespace);
+		
+		GetResponse stateResponse = client
+				.prepareGet(riverIndexName, riverName.getName(), namespace)
+				.execute().actionGet();
+		
+		if (stateResponse.isExists()) {
+			Map<String, Object> indexState = (Map<String, Object>) stateResponse.getSourceAsMap().get(RIVER_TYPE);
+			
+			if (indexState != null) {
+				try {
+					lastTick = indexState.get(LAST_TICK_FIELD).toString();
+					
+					this.logger.info("found last tick for collection {}: {}", namespace, lastTick);
+					
+				} catch (Exception ex) {
+					this.logger.error("error fetching last tick for collection {}: {}", namespace, ex);
+				}
+			} else {
+				this.logger.info("fetching last tick: indexState is null");
+			}
+		}
+		
+		return lastTick;
+	}
+	
 	private boolean isInsertOperation(String op) {
 		return "INSERT".equals(op);
 	}
@@ -380,7 +411,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		return "UPDATE".equals(op);
 	}
 
-	private List<ReplogEntity> getNextArangoDBReplogs() throws ArangoException, JSONException, IOException {
+	private List<ReplogEntity> getNextArangoDBReplogs(String currentTick) throws ArangoException, JSONException, IOException {
 		List<ReplogEntity> replogs = new ArrayList<ReplogEntity>();
 
         CloseableHttpClient httpClient = this.getArangoHttpClient();
@@ -421,7 +452,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
     			checkMore = false;
     			
     		} else {
-                throw new ArangoException("Unexpected http response status: " + status);
+                throw new ArangoException("unexpected http response status: " + status);
             }
         }
 		
@@ -468,7 +499,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			try {
 				return (String) this.get("tick");
 			} catch (JSONException e) {
-				logger.error("Error in ReplogEntity method 'getTick'.");
+				logger.error("error in ReplogEntity method 'getTick'");
 				return null;
 			}
 		}
@@ -477,7 +508,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			try {
 				return (Integer) this.get("type");
 			} catch (JSONException e) {
-				logger.error("Error in ReplogEntity method 'getType'.");
+				logger.error("error in ReplogEntity method 'getType'");
 				return 0;
 			}
 		}
@@ -486,7 +517,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			try {
 				return (String) this.get("key");
 			} catch (JSONException e) {
-				logger.error("Error in ReplogEntity method 'getKey'.");
+				logger.error("error in ReplogEntity method 'getKey'");
 				return null;
 			}
 		}
@@ -495,7 +526,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			try {
 				return (String) this.get("rev");
 			} catch (JSONException e) {
-				logger.error("Error in ReplogEntity method 'getRev'.");
+				logger.error("error in ReplogEntity method 'getRev'");
 				return null;
 			}
 		}
@@ -530,9 +561,9 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		private String currentTick;
 		private final List<ServerAddress> arangoServers = null;
 
-		public Slurper(List<ServerAddress> arangoServers) {
-			currentTick = "0";
+		public Slurper(List<ServerAddress> arangoServers, String lastProcessedTick) {
 			arangoServers = arangoServers;
+			currentTick = lastProcessedTick;
 		}
 
 		@Override
@@ -541,8 +572,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 			while (active) {
 				try {
-					replogCursorResultSet = this.processFullCollection();
-					
+					replogCursorResultSet = this.processCollection(currentTick);
 					ReplogEntity last_item = null;
 					
 					for (ReplogEntity item : replogCursorResultSet) {
@@ -558,7 +588,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 						currentTick = last_item.getTick();
 						
 						if (logger.isDebugEnabled()) {
-							logger.debug("slurper: last_item currentTick = {}", currentTick);
+							logger.debug("slurper: last_item currentTick [{}]", currentTick);
 						}
 					}
 					
@@ -579,11 +609,11 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			}
 		}
 		
-		private List<ReplogEntity> processFullCollection() {
-			List<ReplogEntity> rs = null;
+		private List<ReplogEntity> processCollection(String currentTick) {
+			List<ReplogEntity> res = null;
 			
 			try {
-				rs = getNextArangoDBReplogs();
+				res = getNextArangoDBReplogs(currentTick);
 			} catch (ArangoException aEx) {
 				logger.error("ArangoDB getNextArangoDBReplogs threw an Arango exception", aEx);
 			} catch (JSONException jEx) {
@@ -592,7 +622,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 				logger.error("ArangoDB getNextArangoDBReplogs threw an IO exception", iEx);
 			}
 			
-			return rs;
+			return res;
 		}
 		
 		private boolean check_type(final ReplogEntity entry) {
