@@ -360,18 +360,14 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	}
 	
 	private String getReplogUri() {
-        ServerAddress activeServerAddress = this.getActiveMaster();
+		ServerAddress activeServerAddress = this.getActiveMaster();
         
-        String uri = HTTP_PROTOCOL + "://";
-        uri += activeServerAddress.getHost() + ":" + activeServerAddress.getPort();
-        uri += "/_db/" + this.arangoDb + "/_api/replication/dump?collection=";
-        uri += this.arangoCollection + "&from=";
+		String uri = HTTP_PROTOCOL + "://";
+		uri += activeServerAddress.getHost() + ":" + activeServerAddress.getPort();
+		uri += "/_db/" + this.arangoDb + "/_api/replication/dump?collection=";
+		uri += this.arangoCollection + "&from=";
         
 		return uri;
-	}
-	
-	private boolean isDeleteOperation(String op) {
-		return "DELETE".equals(op);
 	}
 	
 	private String fetchLastTick(final String namespace) {
@@ -402,6 +398,11 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		
 		return lastTick;
 	}
+
+
+	private boolean isDeleteOperation(String op) {
+		return "DELETE".equals(op);
+	}
 	
 	private boolean isInsertOperation(String op) {
 		return "INSERT".equals(op);
@@ -414,64 +415,65 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	private List<ReplogEntity> getNextArangoDBReplogs(String currentTick) throws ArangoException, JSONException, IOException {
 		List<ReplogEntity> replogs = new ArrayList<ReplogEntity>();
 
-        CloseableHttpClient httpClient = this.getArangoHttpClient();
-        String uri = this.getReplogUri();
+		CloseableHttpClient httpClient = this.getArangoHttpClient();
+		String uri = this.getReplogUri();
 
 		if (logger.isDebugEnabled()) {
 			this.logger.debug("http uri = {}", uri + currentTick);
 		}
         
-        boolean checkMore = true;
+		boolean checkMore = true;
         
-        while (checkMore) {
-    		HttpGet httpGet = new HttpGet(uri + currentTick);
-    		
-    		CloseableHttpResponse response = httpClient.execute(httpGet);
-    		int status = response.getStatusLine().getStatusCode();
+		while (checkMore) {
+			HttpGet httpGet = new HttpGet(uri + currentTick);
+
+			CloseableHttpResponse response = httpClient.execute(httpGet);
+			int status = response.getStatusLine().getStatusCode();
 			
-    		if (status >= 200 && status < 300) {
-    			try {
-    				HttpEntity entity = response.getEntity();
+			if (status >= 200 && status < 300) {
+				try {
+					HttpEntity entity = response.getEntity();
             
-    				if (entity != null) {
-    					for (String str : EntityUtils.toString(entity).split("\\n")) {
-    						replogs.add(new ReplogEntity(str));
-    					}
-    				
-    					currentTick = response.getFirstHeader(HTTP_HEADER_LASTINCLUDED).getValue();
-    				}
-    				
-    				EntityUtils.consumeQuietly(entity);
-    				checkMore = Boolean.valueOf(response.getFirstHeader(HTTP_HEADER_CHECKMORE).getValue());
-    				
-    			} finally {
-    				response.close();
-    			}
-				
-    		} else if (status == 404) {
-    			checkMore = false;
-    			
-    		} else {
-                throw new ArangoException("unexpected http response status: " + status);
-            }
-        }
-		
+					if (entity != null) {
+						for (String str : EntityUtils.toString(entity).split("\\n")) {
+						replogs.add(new ReplogEntity(str));
+					}
+
+					currentTick = response.getFirstHeader(HTTP_HEADER_LASTINCLUDED).getValue();
+				}
+
+				EntityUtils.consumeQuietly(entity);
+				checkMore = Boolean.valueOf(response.getFirstHeader(HTTP_HEADER_CHECKMORE).getValue());
+
+				} finally {
+					response.close();
+				}
+	
+			} else if (status == 404) {
+				checkMore = false;
+			
+			} else {
+				throw new ArangoException("unexpected http response status: " + status);
+			}
+		}
+
 		return replogs;
 	}
-	
+
 	private class ArangoException extends Exception {
-        public ArangoException() {
-            super();
-        }
+		public ArangoException() {
+			super();
+		}
         
-        public ArangoException(String message) {
-        	super(message);
-        }
-        public ArangoException(String message, Throwable cause) {
-                super(message, cause);
-        }
+		public ArangoException(String message) {
+			super(message);
+		}
+
+		public ArangoException(String message, Throwable cause) {
+			super(message, cause);
+		}
 	}
-	
+
 	private class ServerAddress {
 		private String host;
 		private int port;
