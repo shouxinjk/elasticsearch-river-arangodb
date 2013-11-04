@@ -72,7 +72,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	public final static String OPTIONS_FIELD = "options";
 	public final static String DROP_COLLECTION_FIELD = "drop_collection";
 	public final static String EXCLUDE_FIELDS_FIELD = "exclude_fields";
-	public final static String FILTER_FIELD = "filter";
 	public final static String CREDENTIALS_FIELD = "credentials";
 	public final static String USER_FIELD = "username";
 	public final static String PASSWORD_FIELD = "password";
@@ -106,7 +105,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	protected final List<ServerAddress> arangoServers = new ArrayList<ServerAddress>();
 	protected final String arangoDb;
 	protected final String arangoCollection;
-	protected final String arangoFilter;
 	protected final String arangoAdminUser;
 	protected final String arangoAdminPassword;
 
@@ -199,12 +197,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 			this.arangoDb = XContentMapValues.nodeStringValue(arangoSettings.get(DB_FIELD), riverName.name());
 			this.arangoCollection = XContentMapValues.nodeStringValue(arangoSettings.get(COLLECTION_FIELD), riverName.name());
-			
-			if (arangoSettings.containsKey(FILTER_FIELD)) {
-				this.arangoFilter = XContentMapValues.nodeStringValue(arangoSettings.get(FILTER_FIELD), "");
-			} else {
-				this.arangoFilter = "";
-			}
 
 			if (arangoSettings.containsKey(SCRIPT_FIELD)) {
 				String scriptType = "js";
@@ -225,7 +217,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			
 			this.arangoDb = riverName.name();
 			this.arangoCollection = riverName.name();
-			this.arangoFilter = "";
 			this.arangoAdminUser = "";
 			this.arangoAdminPassword = "";
 			this.script = null;
@@ -270,9 +261,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			this.logger.info("using arangodb server(s): host [{}], port [{}]", server.getHost(), server.getPort());
 		}
 		
-		this.logger.info("starting arangodb stream. options: throttlesize [{}], filter [{}], db [{}], collection [{}], script [{}], indexing to [{}]/[{}]",
+		this.logger.info("starting arangodb stream. options: throttlesize [{}], db [{}], collection [{}], script [{}], indexing to [{}]/[{}]",
 				this.throttleSize, 
-				this.arangoFilter, 
 				this.arangoDb, 
 				this.arangoCollection, 
 				this.script, 
