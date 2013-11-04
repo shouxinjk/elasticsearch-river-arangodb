@@ -67,7 +67,7 @@ Dependencies
 
 The following files have to be present when running the ArangoDB river. 
 Put them into the ArangoDB river plugin folder, together with the ArangoDB river artefact.
-The standard plugin folder location is: `<ES_HOME>/plugins/river_arangodb` (create this folder if it doesn't exist).
+The standard ArangoDB river plugin folder location is: `<ES_HOME>/plugins/river_arangodb` (create this folder if it doesn't exist).
 You can download a compressed file containing all of the required artefacts (see link below the artefacts lists).
 
 #### Artefacts list for 0.1.0-alpha
@@ -83,8 +83,8 @@ You can download a compressed file containing all of the required artefacts (see
 
 Download: [`elasticsearch-river-arangodb-0.1.0-alpha.zip`](http://www.arangodb.org/downloads/elasticsearch-river-arangodb-0.1.0-alpha.zip).
         
-Remarks
--------
+Prerequisites
+-------------
 
 Before you can use the ArangoDB river, you must ask ArangoDB to switch into the replication logger mode.
 To do so, open an ArangoDB shell and run the following commands:
@@ -98,6 +98,11 @@ Example (javascript):
 
     sudo <ES_HOME>/bin/plugin -install elasticsearch/elasticsearch-lang-javascript/1.2.0
   
+Scripting is not limited to javascript. See the corresponding ElasticSearch documentation.
+
+Hints
+-----
+
 To add a user for basic authentication, open an ArangoDB shell and run the following command:
 
     require("org/arangodb/users").save("<username>", "<password>");
@@ -110,6 +115,17 @@ When starting the database, you can set the ArangoDB daemon parameter
     --server.disable-authentication true
 
 if you like to run the database without any authentication mechanism.
+
+Filtering
+----------
+
+Use scripting if you want to filter your data. Let's say your documents have a boolean field named "available". 
+The following script will filter your data due to their availability flags:
+
+    "script" : "if ( ctx.doc.available == false ) { ctx.ignore = true };"
+
+This script checks the "available" flag, and it adds an "ignore" flag to the given document context when indicated.
+This "ignore" flag then makes the indexer skip the document when processing the streamed data.
 
 License
 -------

@@ -436,14 +436,14 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
             
 					if (entity != null) {
 						for (String str : EntityUtils.toString(entity).split("\\n")) {
-						replogs.add(new ReplogEntity(str));
+							replogs.add(new ReplogEntity(str));
+						}
+
+						currentTick = response.getFirstHeader(HTTP_HEADER_LASTINCLUDED).getValue();
 					}
 
-					currentTick = response.getFirstHeader(HTTP_HEADER_LASTINCLUDED).getValue();
-				}
-
-				EntityUtils.consumeQuietly(entity);
-				checkMore = Boolean.valueOf(response.getFirstHeader(HTTP_HEADER_CHECKMORE).getValue());
+					EntityUtils.consumeQuietly(entity);
+					checkMore = Boolean.valueOf(response.getFirstHeader(HTTP_HEADER_CHECKMORE).getValue());
 
 				} finally {
 					response.close();
