@@ -4,12 +4,12 @@ ArangoDB River Plugin for ElasticSearch
 | ArangoDB River Plugin | ArangoDB | ElasticSearch |
 |-----------------------|----------|---------------|
 | master                | 1.4.0    | 1.0.0         |
-| 0.2.0-alpha           | 1.4.0    | 1.0.0         |
+| 0.2.0                 | 1.4.0    | 1.0.0         |
 | 0.1.0-alpha           | 1.4.0    | 0.90.5        |
 
 The ArangoDB river artefact is named `elasticsearch-river-arangodb-<version>.jar`.
 
-Current artefact version is: `elasticsearch-river-arangodb-0.2.0-alpha.jar`.
+Current artefact version is: `elasticsearch-river-arangodb-0.2.0.jar`.
 
 Configuration
 -------------
@@ -71,9 +71,9 @@ Put them into the ArangoDB river plugin folder, together with the ArangoDB river
 The standard ArangoDB river plugin folder location is: `<ES_HOME>/plugins/river_arangodb` (create this folder if it doesn't exist).
 You can download a compressed file containing all of the required artefacts (see link below the artefacts lists).
 
-#### Artefacts list for 0.2.0-alpha
+#### Artefacts list for 0.2.0
 
-- elasticsearch-river-arangodb-0.2.0-alpha.jar
+- elasticsearch-river-arangodb-0.2.0.jar
 - commons-logging-1.1.3.jar
 - commons-codec-1.6.jar
 - httpclient-4.3.1.jar  
@@ -82,7 +82,7 @@ You can download a compressed file containing all of the required artefacts (see
 - jackson-mapper-asl-1.9.4.jar  
 - json-20090211.jar
 
-Download: [`elasticsearch-river-arangodb-0.2.0-alpha.zip`](http://www.arangodb.org/downloads/elasticsearch-river-arangodb-0.2.0-alpha.zip).
+Download: [`elasticsearch-river-arangodb-0.2.0.zip`](http://www.arangodb.org/downloads/elasticsearch-river-arangodb-0.2.0.zip).
         
 Prerequisites
 -------------
@@ -137,7 +137,7 @@ This software is licensed under the Apache 2 license, see the supplied LICENSE f
 Changelog
 ---------
 
-#### 0.2.0-alpha 
+#### 0.2.0 
 - Minor changes for ElasticSearch v1.0.0.
 
 #### 0.1.0-alpha 
