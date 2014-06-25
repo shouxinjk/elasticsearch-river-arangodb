@@ -32,7 +32,6 @@ import org.apache.http.util.EntityUtils;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
-import org.elasticsearch.ElasticSearchInterruptedException;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -727,9 +726,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 						if (response.hasFailures()) {
 							logger.warn("failed to execute" + response.buildFailureMessage());
 						}
-					} catch (ElasticSearchInterruptedException esie) {
-						logger.warn("river-arangodb indexer bas been interrupted", esie);
-						Thread.currentThread().interrupt();
 					} catch (Exception e) {
 						logger.warn("failed to execute bulk", e);
 					}
