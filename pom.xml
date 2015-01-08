@@ -9,7 +9,7 @@
 	<description>ArangoDB River for ElasticSearch</description>
 	<url>https://github.com/triAGENS/elasticsearch-river-arangodb</url>
 	<inceptionYear>2013</inceptionYear>
-	
+
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
@@ -17,7 +17,7 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	
+
 	<scm>
 		<url>https://github.com/triagens/elasticsearch-river-arangodb</url>
 		<connection>scm:git:git@github.com:triagens/elasticsearch-river-arangodb.git</connection>
@@ -27,7 +27,7 @@
 		<system>GitHub</system>
 		<url>https://github.com/triagens/elasticsearch-river-arangodb/issues</url>
 	</issueManagement>
-	
+
 	<developers>
 		<developer>
 			<email>w.helisch@triagens.de</email>
@@ -57,9 +57,9 @@
 			<version>${httpcomponents.version}</version>
 		</dependency>
 		<dependency>
-        	<groupId>org.json</groupId>
-        	<artifactId>json</artifactId>
-        	<version>${json.version}</version>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>${json.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.codehaus.jackson</groupId>
