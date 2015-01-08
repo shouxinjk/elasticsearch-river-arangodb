@@ -374,19 +374,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		return lastTick;
 	}
 
-
-	private boolean isDeleteOperation(String op) {
-		return "DELETE".equals(op);
-	}
-
-	private boolean isInsertOperation(String op) {
-		return "INSERT".equals(op);
-	}
-
-	private boolean isUpdateOperation(String op) {
-		return "UPDATE".equals(op);
-	}
-
 	private List<ReplogEntity> getNextArangoDBReplogs(String currentTick) throws ArangoException, JSONException, IOException {
 		List<ReplogEntity> replogs = new ArrayList<ReplogEntity>();
 
@@ -505,7 +492,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		private void processReplogEntry(final ReplogEntity entry) throws ArangoException, InterruptedException {
 			String documentHandle = entry.getKey();
-			String operation = entry.getOperation();
+			OpType operation = entry.getOperation();
 			String replogTick = entry.getTick();
 
 			if (logger.isDebugEnabled()) {
@@ -523,9 +510,10 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 			Map<String, Object> data = null;
 
-			if (isInsertOperation(operation)) {
+			if (OpType.INSERT == operation) {
 				data = entry.getData();
-			} else if (isUpdateOperation(operation)) {
+			}
+			else if (OpType.UPDATE == operation) {
 				data = entry.getData();
 			}
 
@@ -540,7 +528,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			addToStream(documentHandle, operation, replogTick, data);
 		}
 
-		private void addToStream(final String documentHandle, final String operation, final String tick, final Map<String, Object> data) throws InterruptedException {
+		private void addToStream(final String documentHandle, final OpType operation, final String tick, final Map<String, Object> data) throws InterruptedException {
 			if (logger.isDebugEnabled()) {
 				logger.debug("addToStream - operation [{}], currentTick [{}], data [{}]", operation, tick, data);
 			}
@@ -621,7 +609,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		private String updateBulkRequest(final BulkRequestBuilder bulk, Map<String, Object> data) {
 			String replogTick = (String) data.get(REPLOG_FIELD_TICK);
-			String operation = (String) data.get(STREAM_FIELD_OPERATION);
+			OpType operation = (OpType) data.get(STREAM_FIELD_OPERATION);
 			String objectId = "";
 
 			if (data.get(REPLOG_FIELD_KEY) != null) {
@@ -685,7 +673,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 					}
 
 					if (ctx.containsKey("operation")) {
-						operation = ctx.get("operation").toString();
+						operation = OpType.valueOf(ctx.get("operation").toString());
 						logger.debug("From script operation: {}", operation);
 					}
 				}
@@ -702,7 +690,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 							operation, index, type, routing, parent);
 				}
 
-				if (isInsertOperation(operation)) {
+				if (operation == OpType.INSERT) {
 					if (logger.isDebugEnabled()) {
 						logger.debug("Insert operation - id: {}", operation, objectId);
 					}
@@ -712,7 +700,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 							.parent(parent));
 
 					insertedDocuments++;
-				} else if (isUpdateOperation(operation)) {
+				}
+				else if (operation == OpType.UPDATE) {
 					if (logger.isDebugEnabled()) {
 						logger.debug("Update operation - id: {}", objectId);
 					}
@@ -721,7 +710,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 					bulk.add(indexRequest(index).type(type).id(objectId).source(build(data, objectId)).routing(routing).parent(parent));
 
 					updatedDocuments++;
-				} else if (isDeleteOperation(operation)) {
+				}
+				else if (operation == OpType.DELETE) {
 					if (logger.isDebugEnabled()) {
 						logger.debug("Delete operation - id: {}, data [{}]", objectId, data);
 					}

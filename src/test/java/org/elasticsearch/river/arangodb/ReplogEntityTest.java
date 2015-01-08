@@ -106,12 +106,12 @@ public class ReplogEntityTest {
 	@Test
 	public void getOperationDelete() throws JSONException {
 		ReplogEntity re = new ReplogEntity("{\"type\":2302}");
-		assertEquals(re.getOperation(), "DELETE");
+		assertEquals(re.getOperation(), OpType.DELETE);
 	}
 
 	@Test
 	public void getOperationUpdate() throws JSONException {
 		ReplogEntity re = new ReplogEntity("{\"type\":1234}");
-		assertEquals(re.getOperation(), "UPDATE");
+		assertEquals(re.getOperation(), OpType.UPDATE);
 	}
 }

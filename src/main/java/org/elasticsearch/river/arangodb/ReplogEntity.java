@@ -95,12 +95,12 @@ public class ReplogEntity extends JSONObject {
 		}
 	}
 
-	public String getOperation() {
+	public OpType getOperation() {
 		if (getType() == 2302) {
-			return "DELETE";
+			return OpType.DELETE;
 		}
 		else {
-			return "UPDATE";
+			return OpType.UPDATE;
 		}
 	}
 }
