@@ -125,7 +125,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 	private String currentTick;
 
-	@SuppressWarnings("unchecked")
 	@Inject
 	public ArangoDBRiver(final RiverName riverName, final RiverSettings settings,
 			@RiverIndexName final String riverIndexName, final Client client, final ScriptService scriptService) throws ArangoException {
@@ -621,7 +620,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
 		private void processReplogEntry(final ReplogEntity entry) throws ArangoException, InterruptedException {
 			String documentHandle = entry.getKey();
 			String operation = entry.getOperation();
@@ -738,7 +736,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			}
 		}
 
-		@SuppressWarnings({ "unchecked" })
 		private String updateBulkRequest(final BulkRequestBuilder bulk, Map<String, Object> data) {
 			String replogTick = (String) data.get(REPLOG_FIELD_TICK);
 			String operation = (String) data.get(STREAM_FIELD_OPERATION);
