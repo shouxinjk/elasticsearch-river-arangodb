@@ -442,20 +442,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		return replogs;
 	}
 
-	private class ArangoException extends Exception {
-		public ArangoException() {
-			super();
-		}
-
-		public ArangoException(String message) {
-			super(message);
-		}
-
-		public ArangoException(String message, Throwable cause) {
-			super(message, cause);
-		}
-	}
-
 	private class ServerAddress {
 		private String host;
 		private int port;
