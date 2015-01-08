@@ -27,7 +27,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -55,7 +54,6 @@ import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	public final static String RIVER_TYPE = "arangodb";
@@ -91,7 +89,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	public final static String HTTP_HEADER_LASTINCLUDED = "x-arango-replication-lastincluded";
 
 	protected final Client client;
-	protected final ObjectMapper mapper;
 
 	protected final String riverIndexName;
 
@@ -135,7 +132,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		this.riverIndexName = riverIndexName;
 		this.client = client;
-		mapper = new ObjectMapper();
 
 		for (String field : basicExcludeFields) {
 			excludeFields.add(field);
@@ -442,71 +438,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		return replogs;
 	}
 
-	private class ReplogEntity extends JSONObject {
-		public ReplogEntity(String str) throws JSONException {
-			super(str);
-		}
-
-		private String getTick() {
-			try {
-				return (String) get("tick");
-			} catch (JSONException e) {
-				logger.error("error in ReplogEntity method 'getTick'");
-				return null;
-			}
-		}
-
-		private int getType() {
-			try {
-				return (Integer) get("type");
-			} catch (JSONException e) {
-				logger.error("error in ReplogEntity method 'getType'");
-				return 0;
-			}
-		}
-
-		private String getKey() {
-			try {
-				return (String) get("key");
-			} catch (JSONException e) {
-				logger.error("error in ReplogEntity method 'getKey'");
-				return null;
-			}
-		}
-
-		private String getRev() {
-			try {
-				return (String) get("rev");
-			} catch (JSONException e) {
-				logger.error("error in ReplogEntity method 'getRev'");
-				return null;
-			}
-		}
-
-		private Map<String, Object> getData() {
-			try {
-				if (has("data")) {
-					return mapper.readValue(get("data").toString(), HashMap.class);
-				} else {
-					return null;
-				}
-			} catch (IOException e) {
-				logger.error("Found IOException in ReplogEntity method 'getData'.");
-				return null;
-			} catch (JSONException e) {
-				logger.error("Found JSONException in ReplogEntity method 'getData'.");
-				return null;
-			}
-		}
-
-		private String getOperation() {
-			if (getType() == 2302) {
-				return "DELETE";
-			} else {
-				return "UPDATE";
-			}
-		}
-	}
 
 	private class Slurper implements Runnable {
 		private List<ReplogEntity> replogCursorResultSet;
