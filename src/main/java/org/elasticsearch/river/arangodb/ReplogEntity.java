@@ -95,6 +95,7 @@ public class ReplogEntity extends JSONObject {
 		}
 	}
 
+	/** see https://github.com/triAGENS/ArangoDB/blob/master/arangod/VocBase/replication-common.h */
 	public OpType getOperation() {
 		if (getType() == 2302) {
 			return OpType.DELETE;
