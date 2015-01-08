@@ -38,10 +38,10 @@
 	</developers>
 
 	<properties>
-		<elasticsearch.version>1.0.0</elasticsearch.version>
-		<httpcomponents.version>4.3.1</httpcomponents.version>
-		<jackson.version>1.9.4</jackson.version>
-		<json.version>20090211</json.version>
+		<elasticsearch.version>1.4.2</elasticsearch.version>
+		<httpcomponents.version>4.3.6</httpcomponents.version>
+		<jackson.version>1.9.13</jackson.version>
+		<json.version>20141113</json.version>
 	</properties>
 
 	<dependencies>
