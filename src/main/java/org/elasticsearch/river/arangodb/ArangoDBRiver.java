@@ -57,36 +57,36 @@ import org.json.JSONException;
 
 public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
-	private final static String RIVER_TYPE = "arangodb";
-	private final static String DB_FIELD = "db";
-	private final static String HOST_FIELD = "host";
-	private final static String PORT_FIELD = "port";
-	private final static String OPTIONS_FIELD = "options";
-	private final static String DROP_COLLECTION_FIELD = "drop_collection";
-	private final static String EXCLUDE_FIELDS_FIELD = "exclude_fields";
-	private final static String CREDENTIALS_FIELD = "credentials";
-	private final static String USER_FIELD = "username";
-	private final static String PASSWORD_FIELD = "password";
-	private final static String SCRIPT_FIELD = "script";
-	private final static String SCRIPT_TYPE_FIELD = "scriptType";
-	private final static String COLLECTION_FIELD = "collection";
-	private final static String INDEX_OBJECT = "index";
-	private final static String NAME_FIELD = "name";
-	private final static String TYPE_FIELD = "type";
-	private final static String DEFAULT_DB_HOST = "localhost";
-	private final static int DEFAULT_DB_PORT = 8529;
-	private final static String THROTTLE_SIZE_FIELD = "throttle_size";
-	private final static String BULK_SIZE_FIELD = "bulk_size";
-	private final static String BULK_TIMEOUT_FIELD = "bulk_timeout";
-	private final static String LAST_TICK_FIELD = "_last_tick";
-	private final static String REPLOG_ENTRY_UNDEFINED = "undefined";
-	private final static String REPLOG_FIELD_KEY = "key";
-	private final static String REPLOG_FIELD_TICK = "tick";
-	private final static String STREAM_FIELD_OPERATION = "op";
+	private static final String RIVER_TYPE = "arangodb";
+	private static final String DB_FIELD = "db";
+	private static final String HOST_FIELD = "host";
+	private static final String PORT_FIELD = "port";
+	private static final String OPTIONS_FIELD = "options";
+	private static final String DROP_COLLECTION_FIELD = "drop_collection";
+	private static final String EXCLUDE_FIELDS_FIELD = "exclude_fields";
+	private static final String CREDENTIALS_FIELD = "credentials";
+	private static final String USER_FIELD = "username";
+	private static final String PASSWORD_FIELD = "password";
+	private static final String SCRIPT_FIELD = "script";
+	private static final String SCRIPT_TYPE_FIELD = "scriptType";
+	private static final String COLLECTION_FIELD = "collection";
+	private static final String INDEX_OBJECT = "index";
+	private static final String NAME_FIELD = "name";
+	private static final String TYPE_FIELD = "type";
+	private static final String DEFAULT_DB_HOST = "localhost";
+	private static final int DEFAULT_DB_PORT = 8529;
+	private static final String THROTTLE_SIZE_FIELD = "throttle_size";
+	private static final String BULK_SIZE_FIELD = "bulk_size";
+	private static final String BULK_TIMEOUT_FIELD = "bulk_timeout";
+	private static final String LAST_TICK_FIELD = "_last_tick";
+	private static final String REPLOG_ENTRY_UNDEFINED = "undefined";
+	private static final String REPLOG_FIELD_KEY = "key";
+	private static final String REPLOG_FIELD_TICK = "tick";
+	private static final String STREAM_FIELD_OPERATION = "op";
 
-	private final static String HTTP_PROTOCOL = "http";
-	private final static String HTTP_HEADER_CHECKMORE = "x-arango-replication-checkmore";
-	private final static String HTTP_HEADER_LASTINCLUDED = "x-arango-replication-lastincluded";
+	private static final String HTTP_PROTOCOL = "http";
+	private static final String HTTP_HEADER_CHECKMORE = "x-arango-replication-checkmore";
+	private static final String HTTP_HEADER_LASTINCLUDED = "x-arango-replication-lastincluded";
 
 	private final Client client;
 
