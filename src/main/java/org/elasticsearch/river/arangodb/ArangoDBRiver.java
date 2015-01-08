@@ -89,7 +89,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	public final static String REPLOG_ENTRY_UNDEFINED = "undefined";
 	public final static String REPLOG_FIELD_KEY = "key";
 	public final static String REPLOG_FIELD_TICK = "tick";
-	public final static List   REPLOG_SLURPED_TYPES = asList(2000, 2300, 2302);
+	public final static List<Integer> REPLOG_SLURPED_TYPES = asList(2000, 2300, 2302);
 	public final static String STREAM_FIELD_OPERATION = "op";
 
 	public final static String HTTP_PROTOCOL = "http";
