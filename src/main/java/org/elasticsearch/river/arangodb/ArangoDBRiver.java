@@ -321,17 +321,14 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	private CloseableHttpClient getArangoHttpClient() {
 		if (arangoHttpClient == null) {
 			ServerAddress activeServerAddress = getActiveMaster();
+			CredentialsProvider credsProvider = new BasicCredentialsProvider();
+			AuthScope authScope = new AuthScope(activeServerAddress.getHost(), activeServerAddress.getPort());
+			UsernamePasswordCredentials unpwCreds = new UsernamePasswordCredentials(arangoAdminUser, arangoAdminPassword);
+			credsProvider.setCredentials(authScope, unpwCreds);
 
-	        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+			arangoHttpClient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
 
-	        credsProvider.setCredentials(
-	        		new AuthScope(activeServerAddress.getHost(), activeServerAddress.getPort()),
-	                new UsernamePasswordCredentials(arangoAdminUser, arangoAdminPassword));
-
-	        arangoHttpClient = HttpClients.custom()
-	                .setDefaultCredentialsProvider(credsProvider).build();
-
-	        logger.info("created ArangoDB http client");
+			logger.info("created ArangoDB http client");
 		}
 
 		return arangoHttpClient;
