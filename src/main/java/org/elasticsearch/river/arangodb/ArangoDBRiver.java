@@ -276,7 +276,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		String lastProcessedTick = fetchLastTick(arangoCollection);
 
-		Thread slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(new Slurper(arangoServers, lastProcessedTick));
+		Thread slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(new Slurper(lastProcessedTick));
 
 		slurperThreads.add(slurperThread);
 
@@ -442,24 +442,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		return replogs;
 	}
 
-	private class ServerAddress {
-		private String host;
-		private int port;
-
-		public ServerAddress(String host, int port) {
-			this.host = host;
-			this.port = port;
-		}
-
-		public String getHost() {
-			return host;
-		}
-
-		public int getPort() {
-			return port;
-		}
-	}
-
 	private class ReplogEntity extends JSONObject {
 		public ReplogEntity(String str) throws JSONException {
 			super(str);
@@ -529,10 +511,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	private class Slurper implements Runnable {
 		private List<ReplogEntity> replogCursorResultSet;
 		private String currentTick;
-		private final List<ServerAddress> arangoServers = null;
 
-		public Slurper(List<ServerAddress> arangoServers, String lastProcessedTick) {
-			arangoServers = arangoServers;
+		public Slurper(String lastProcessedTick) {
 			currentTick = lastProcessedTick;
 		}
 
