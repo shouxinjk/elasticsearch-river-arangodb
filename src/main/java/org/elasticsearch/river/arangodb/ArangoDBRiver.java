@@ -123,8 +123,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	private int arangoPort;
 	private CloseableHttpClient arangoHttpClient;
 
-	private String currentTick;
-
 	@Inject
 	public ArangoDBRiver(final RiverName riverName, final RiverSettings settings,
 			@RiverIndexName final String riverIndexName, final Client client, final ScriptService scriptService) throws ArangoException {
@@ -609,15 +607,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			}
 
 			return res;
-		}
-
-		private boolean check_type(final ReplogEntity entry) {
-			if (REPLOG_SLURPED_TYPES.contains(entry.getType())) {
-				return true;
-			} else {
-				logger.error("Sorry: Don't know how to handle replog type {}.", entry.getType());
-				return false;
-			}
 		}
 
 		private void processReplogEntry(final ReplogEntity entry) throws ArangoException, InterruptedException {
