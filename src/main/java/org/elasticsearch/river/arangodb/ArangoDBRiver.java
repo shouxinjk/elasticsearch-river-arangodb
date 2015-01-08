@@ -56,63 +56,63 @@ import org.elasticsearch.script.ScriptService.ScriptType;
 import org.json.JSONException;
 
 public class ArangoDBRiver extends AbstractRiverComponent implements River {
-	public final static String RIVER_TYPE = "arangodb";
-	public final static String DB_FIELD = "db";
-	public final static String HOST_FIELD = "host";
-	public final static String PORT_FIELD = "port";
-	public final static String OPTIONS_FIELD = "options";
-	public final static String DROP_COLLECTION_FIELD = "drop_collection";
-	public final static String EXCLUDE_FIELDS_FIELD = "exclude_fields";
-	public final static String CREDENTIALS_FIELD = "credentials";
-	public final static String USER_FIELD = "username";
-	public final static String PASSWORD_FIELD = "password";
-	public final static String SCRIPT_FIELD = "script";
-	public final static String SCRIPT_TYPE_FIELD = "scriptType";
-	public final static String COLLECTION_FIELD = "collection";
-	public final static String INDEX_OBJECT = "index";
-	public final static String NAME_FIELD = "name";
-	public final static String TYPE_FIELD = "type";
-	public final static String DEFAULT_DB_HOST = "localhost";
-	public final static int    DEFAULT_DB_PORT = 8529;
-	public final static String THROTTLE_SIZE_FIELD = "throttle_size";
-	public final static String BULK_SIZE_FIELD = "bulk_size";
-	public final static String BULK_TIMEOUT_FIELD = "bulk_timeout";
-	public final static String LAST_TICK_FIELD = "_last_tick";
-	public final static String REPLOG_ENTRY_UNDEFINED = "undefined";
-	public final static String REPLOG_FIELD_KEY = "key";
-	public final static String REPLOG_FIELD_TICK = "tick";
-	public final static List<Integer> REPLOG_SLURPED_TYPES = asList(2000, 2300, 2302);
-	public final static String STREAM_FIELD_OPERATION = "op";
 
-	public final static String HTTP_PROTOCOL = "http";
-	public final static String HTTP_HEADER_CHECKMORE = "x-arango-replication-checkmore";
-	public final static String HTTP_HEADER_LASTINCLUDED = "x-arango-replication-lastincluded";
+	private final static String RIVER_TYPE = "arangodb";
+	private final static String DB_FIELD = "db";
+	private final static String HOST_FIELD = "host";
+	private final static String PORT_FIELD = "port";
+	private final static String OPTIONS_FIELD = "options";
+	private final static String DROP_COLLECTION_FIELD = "drop_collection";
+	private final static String EXCLUDE_FIELDS_FIELD = "exclude_fields";
+	private final static String CREDENTIALS_FIELD = "credentials";
+	private final static String USER_FIELD = "username";
+	private final static String PASSWORD_FIELD = "password";
+	private final static String SCRIPT_FIELD = "script";
+	private final static String SCRIPT_TYPE_FIELD = "scriptType";
+	private final static String COLLECTION_FIELD = "collection";
+	private final static String INDEX_OBJECT = "index";
+	private final static String NAME_FIELD = "name";
+	private final static String TYPE_FIELD = "type";
+	private final static String DEFAULT_DB_HOST = "localhost";
+	private final static int DEFAULT_DB_PORT = 8529;
+	private final static String THROTTLE_SIZE_FIELD = "throttle_size";
+	private final static String BULK_SIZE_FIELD = "bulk_size";
+	private final static String BULK_TIMEOUT_FIELD = "bulk_timeout";
+	private final static String LAST_TICK_FIELD = "_last_tick";
+	private final static String REPLOG_ENTRY_UNDEFINED = "undefined";
+	private final static String REPLOG_FIELD_KEY = "key";
+	private final static String REPLOG_FIELD_TICK = "tick";
+	private final static String STREAM_FIELD_OPERATION = "op";
 
-	protected final Client client;
+	private final static String HTTP_PROTOCOL = "http";
+	private final static String HTTP_HEADER_CHECKMORE = "x-arango-replication-checkmore";
+	private final static String HTTP_HEADER_LASTINCLUDED = "x-arango-replication-lastincluded";
 
-	protected final String riverIndexName;
+	private final Client client;
 
-	protected final List<ServerAddress> arangoServers = new ArrayList<ServerAddress>();
-	protected final String arangoDb;
-	protected final String arangoCollection;
-	protected final String arangoAdminUser;
-	protected final String arangoAdminPassword;
+	private final String riverIndexName;
 
-	protected final String indexName;
-	protected final String typeName;
-	protected final int bulkSize;
-	protected final TimeValue bulkTimeout;
-	protected final int throttleSize;
-	protected final boolean dropCollection;
+	private final List<ServerAddress> arangoServers = new ArrayList<ServerAddress>();
+	private final String arangoDb;
+	private final String arangoCollection;
+	private final String arangoAdminUser;
+	private final String arangoAdminPassword;
 
-	protected final ArrayList<String> basicExcludeFields = new ArrayList<String>(asList("_id", "_key", "_rev"));
-	protected Set<String> excludeFields = new HashSet<String>();
+	private final String indexName;
+	private final String typeName;
+	private final int bulkSize;
+	private final TimeValue bulkTimeout;
+	private final int throttleSize;
+	private final boolean dropCollection;
+
+	private final ArrayList<String> basicExcludeFields = new ArrayList<String>(asList("_id", "_key", "_rev"));
+	private Set<String> excludeFields = new HashSet<String>();
 
 	private final ExecutableScript script;
 
-	protected volatile List<Thread> slurperThreads = new ArrayList<Thread>();
-	protected volatile Thread indexerThread;
-	protected volatile boolean active = true;
+	private volatile List<Thread> slurperThreads = new ArrayList<Thread>();
+	private volatile Thread indexerThread;
+	private volatile boolean active = true;
 
 	private final BlockingQueue<Map<String, Object>> stream;
 
