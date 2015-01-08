@@ -5,6 +5,35 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.elasticsearch.client.Requests.indexRequest;
 import static org.elasticsearch.common.collect.Maps.newHashMap;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.river.arangodb.ArangoConstants.BULK_SIZE_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.BULK_TIMEOUT_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.COLLECTION_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.CREDENTIALS_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.DB_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.DEFAULT_DB_HOST;
+import static org.elasticsearch.river.arangodb.ArangoConstants.DEFAULT_DB_PORT;
+import static org.elasticsearch.river.arangodb.ArangoConstants.DROP_COLLECTION_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.EXCLUDE_FIELDS_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.HOST_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_CHECKMORE;
+import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_LASTINCLUDED;
+import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_PROTOCOL;
+import static org.elasticsearch.river.arangodb.ArangoConstants.INDEX_OBJECT;
+import static org.elasticsearch.river.arangodb.ArangoConstants.LAST_TICK_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.NAME_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.OPTIONS_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.PASSWORD_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.PORT_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_ENTRY_UNDEFINED;
+import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_FIELD_KEY;
+import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_FIELD_TICK;
+import static org.elasticsearch.river.arangodb.ArangoConstants.RIVER_TYPE;
+import static org.elasticsearch.river.arangodb.ArangoConstants.SCRIPT_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.SCRIPT_TYPE_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.STREAM_FIELD_OPERATION;
+import static org.elasticsearch.river.arangodb.ArangoConstants.THROTTLE_SIZE_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.TYPE_FIELD;
+import static org.elasticsearch.river.arangodb.ArangoConstants.USER_FIELD;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,37 +85,6 @@ import org.elasticsearch.script.ScriptService.ScriptType;
 import org.json.JSONException;
 
 public class ArangoDBRiver extends AbstractRiverComponent implements River {
-
-	private static final String RIVER_TYPE = "arangodb";
-	private static final String DB_FIELD = "db";
-	private static final String HOST_FIELD = "host";
-	private static final String PORT_FIELD = "port";
-	private static final String OPTIONS_FIELD = "options";
-	private static final String DROP_COLLECTION_FIELD = "drop_collection";
-	private static final String EXCLUDE_FIELDS_FIELD = "exclude_fields";
-	private static final String CREDENTIALS_FIELD = "credentials";
-	private static final String USER_FIELD = "username";
-	private static final String PASSWORD_FIELD = "password";
-	private static final String SCRIPT_FIELD = "script";
-	private static final String SCRIPT_TYPE_FIELD = "scriptType";
-	private static final String COLLECTION_FIELD = "collection";
-	private static final String INDEX_OBJECT = "index";
-	private static final String NAME_FIELD = "name";
-	private static final String TYPE_FIELD = "type";
-	private static final String DEFAULT_DB_HOST = "localhost";
-	private static final int DEFAULT_DB_PORT = 8529;
-	private static final String THROTTLE_SIZE_FIELD = "throttle_size";
-	private static final String BULK_SIZE_FIELD = "bulk_size";
-	private static final String BULK_TIMEOUT_FIELD = "bulk_timeout";
-	private static final String LAST_TICK_FIELD = "_last_tick";
-	private static final String REPLOG_ENTRY_UNDEFINED = "undefined";
-	private static final String REPLOG_FIELD_KEY = "key";
-	private static final String REPLOG_FIELD_TICK = "tick";
-	private static final String STREAM_FIELD_OPERATION = "op";
-
-	private static final String HTTP_PROTOCOL = "http";
-	private static final String HTTP_HEADER_CHECKMORE = "x-arango-replication-checkmore";
-	private static final String HTTP_HEADER_LASTINCLUDED = "x-arango-replication-lastincluded";
 
 	private final Client client;
 
