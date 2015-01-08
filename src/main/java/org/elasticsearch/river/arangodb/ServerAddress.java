@@ -2,8 +2,8 @@ package org.elasticsearch.river.arangodb;
 
 public class ServerAddress {
 
-	private String host;
-	private int port;
+	private final String host;
+	private final int port;
 
 	public ServerAddress(String host, int port) {
 		this.host = host;
