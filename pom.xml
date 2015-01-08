@@ -42,6 +42,7 @@
 		<httpcomponents.version>4.3.6</httpcomponents.version>
 		<jackson.version>1.9.13</jackson.version>
 		<json.version>20141113</json.version>
+		<jsr166.version>1.7.0</jsr166.version>
 	</properties>
 
 	<dependencies>
@@ -65,6 +66,11 @@
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-mapper-asl</artifactId>
 			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+				<groupId>org.codehaus.jsr166-mirror</groupId>
+				<artifactId>jsr166</artifactId>
+				<version>${jsr166.version}</version>
 		</dependency>
 	</dependencies>
 
