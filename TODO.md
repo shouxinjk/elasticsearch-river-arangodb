@@ -3,7 +3,8 @@ TODO / Refactorings
 ===================
 
 * which java version to support? currently it's 1.6
-* org.json
+* check if we actually have multiple slurpers (they're stored in a list)
+* org.json dependency
   * the old version is really old... the newer versions won't work with java6
 * ReplogEntity
   * don't catch JSONException, it's an unchecked Exception (unless it causes problems)
