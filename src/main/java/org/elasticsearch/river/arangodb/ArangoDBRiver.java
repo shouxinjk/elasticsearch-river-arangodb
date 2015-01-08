@@ -3,6 +3,7 @@ package org.elasticsearch.river.arangodb;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.elasticsearch.client.Requests.indexRequest;
+import static org.elasticsearch.common.collect.Maps.newHashMap;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.IOException;
@@ -35,7 +36,6 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.common.StopWatch;
-import org.elasticsearch.common.collect.Maps;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
@@ -53,6 +53,7 @@ import org.elasticsearch.river.RiverName;
 import org.elasticsearch.river.RiverSettings;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.script.ScriptService.ScriptType;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -191,13 +192,15 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			arangoCollection = XContentMapValues.nodeStringValue(arangoSettings.get(COLLECTION_FIELD), riverName.name());
 
 			if (arangoSettings.containsKey(SCRIPT_FIELD)) {
-				String scriptType = "js";
-				
+				String scriptLang = "js";
+
 				if (arangoSettings.containsKey(SCRIPT_TYPE_FIELD)) {
-					scriptType = arangoSettings.get(SCRIPT_TYPE_FIELD).toString();
+					scriptLang = arangoSettings.get(SCRIPT_TYPE_FIELD).toString();
 				}
 
-				script = scriptService.executable(scriptType, arangoSettings.get(SCRIPT_FIELD).toString(), Maps.newHashMap());
+				String scriptString = arangoSettings.get(SCRIPT_FIELD).toString();
+				ScriptType scriptType = ScriptType.INLINE;
+				script = scriptService.executable(scriptLang, scriptString, scriptType, newHashMap());
 			} else {
 				script = null;
 			}
