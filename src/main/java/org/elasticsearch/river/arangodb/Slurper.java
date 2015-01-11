@@ -50,7 +50,17 @@ public class Slurper implements Runnable {
 	private final BlockingQueue<Map<String, Object>> stream;
 	private final ArangoDBRiver river;
 
-	public Slurper(String lastProcessedTick, Set<String> excludeFields, String arangoCollection, String arangoDb, String arangoAdminUser, String arangoAdminPassword, List<ServerAddress> arangoServers, BlockingQueue<Map<String, Object>> stream, ArangoDBRiver river) {
+	public Slurper( //
+	String lastProcessedTick, //
+		Set<String> excludeFields, //
+		String arangoCollection, //
+		String arangoDb, //
+		String arangoAdminUser, //
+		String arangoAdminPassword, //
+		List<ServerAddress> arangoServers, //
+		BlockingQueue<Map<String, Object>> stream, //
+		ArangoDBRiver river //
+	) {
 		currentTick = lastProcessedTick;
 		this.excludeFields = unmodifiableSet(excludeFields);
 		this.arangoCollection = arangoCollection;
