@@ -88,10 +88,15 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	private String arangoHost;
 	private int arangoPort;
 
-
 	@Inject
-	public ArangoDBRiver(final RiverName riverName, final RiverSettings settings,
-			@RiverIndexName final String riverIndexName, final Client client, final ScriptService scriptService) throws ArangoException {
+	public ArangoDBRiver( //
+	final RiverName riverName, //
+		final RiverSettings settings, //
+		@RiverIndexName final String riverIndexName, //
+		final Client client, //
+		final ScriptService scriptService //
+	) throws ArangoException {
+
 		super(riverName, settings);
 
 		if (logger.isDebugEnabled()) {
