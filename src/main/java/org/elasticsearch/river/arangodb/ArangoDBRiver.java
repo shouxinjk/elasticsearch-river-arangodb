@@ -15,9 +15,6 @@ import static org.elasticsearch.river.arangodb.ArangoConstants.DEFAULT_DB_PORT;
 import static org.elasticsearch.river.arangodb.ArangoConstants.DROP_COLLECTION_FIELD;
 import static org.elasticsearch.river.arangodb.ArangoConstants.EXCLUDE_FIELDS_FIELD;
 import static org.elasticsearch.river.arangodb.ArangoConstants.HOST_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_CHECKMORE;
-import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_LASTINCLUDED;
-import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_PROTOCOL;
 import static org.elasticsearch.river.arangodb.ArangoConstants.INDEX_OBJECT;
 import static org.elasticsearch.river.arangodb.ArangoConstants.LAST_TICK_FIELD;
 import static org.elasticsearch.river.arangodb.ArangoConstants.NAME_FIELD;
@@ -37,7 +34,6 @@ import static org.elasticsearch.river.arangodb.ArangoConstants.USER_FIELD;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,16 +42,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -82,7 +68,6 @@ import org.elasticsearch.river.RiverSettings;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptService.ScriptType;
-import org.json.JSONException;
 
 public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
@@ -108,6 +93,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 	private final ExecutableScript script;
 
+	private volatile List<Slurper> slurpers = new ArrayList<Slurper>();
 	private volatile List<Thread> slurperThreads = new ArrayList<Thread>();
 	private volatile Thread indexerThread;
 	private volatile boolean active = true;
@@ -116,7 +102,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 	private String arangoHost;
 	private int arangoPort;
-	private CloseableHttpClient arangoHttpClient;
+
 
 	@Inject
 	public ArangoDBRiver(final RiverName riverName, final RiverSettings settings,
@@ -270,8 +256,10 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		String lastProcessedTick = fetchLastTick(arangoCollection);
 
-		Thread slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(new Slurper(lastProcessedTick));
+		Slurper slurper = new Slurper(lastProcessedTick, excludeFields, arangoCollection, arangoDb, arangoAdminUser, arangoAdminPassword, arangoServers, stream, this);
+		Thread slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(slurper);
 
+		slurpers.add(slurper);
 		slurperThreads.add(slurperThread);
 
 		for (Thread thread : slurperThreads) {
@@ -288,7 +276,12 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	public void close() {
 		if (active) {
 			logger.info("closing arangodb stream river");
+
 			active = false;
+
+			for (Slurper slurper : slurpers) {
+				slurper.shutdown();
+			}
 
 			for (Thread thread : slurperThreads) {
 				thread.interrupt();
@@ -297,50 +290,11 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 			indexerThread.interrupt();
 			logger.info("stopping arangodb indexer");
-
-			try {
-				arangoHttpClient.close();
-			} catch (IOException iEx) {
-				logger.error("River method close threw an IO exception", iEx);
-			}
-
-			try {
-				arangoHttpClient.close();
-			} catch (Exception ex) {
-				logger.error("Http client method close threw an exception", ex);
-			}
 		}
 	}
 
-	private ServerAddress getActiveMaster() {
-		return arangoServers.get(0);
-	}
-
-	private CloseableHttpClient getArangoHttpClient() {
-		if (arangoHttpClient == null) {
-			ServerAddress activeServerAddress = getActiveMaster();
-			CredentialsProvider credsProvider = new BasicCredentialsProvider();
-			AuthScope authScope = new AuthScope(activeServerAddress.getHost(), activeServerAddress.getPort());
-			UsernamePasswordCredentials unpwCreds = new UsernamePasswordCredentials(arangoAdminUser, arangoAdminPassword);
-			credsProvider.setCredentials(authScope, unpwCreds);
-
-			arangoHttpClient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
-
-			logger.info("created ArangoDB http client");
-		}
-
-		return arangoHttpClient;
-	}
-
-	private String getReplogUri() {
-		ServerAddress activeServerAddress = getActiveMaster();
-
-		String uri = HTTP_PROTOCOL + "://";
-		uri += activeServerAddress.getHost() + ":" + activeServerAddress.getPort();
-		uri += "/_db/" + arangoDb + "/_api/replication/dump?collection=";
-		uri += arangoCollection + "&from=";
-
-		return uri;
+	public boolean isActive() {
+		return active;
 	}
 
 	private String fetchLastTick(final String namespace) {
@@ -372,176 +326,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		return lastTick;
 	}
 
-	private List<ReplogEntity> getNextArangoDBReplogs(String currentTick) throws ArangoException, JSONException, IOException {
-		List<ReplogEntity> replogs = new ArrayList<ReplogEntity>();
 
-		CloseableHttpClient httpClient = getArangoHttpClient();
-		String uri = getReplogUri();
-
-		if (logger.isDebugEnabled()) {
-			logger.debug("http uri = {}", uri + currentTick);
-		}
-
-		boolean checkMore = true;
-
-		while (checkMore) {
-			HttpGet httpGet = new HttpGet(uri + currentTick);
-
-			CloseableHttpResponse response = httpClient.execute(httpGet);
-			int status = response.getStatusLine().getStatusCode();
-
-			if (status >= 200 && status < 300) {
-				try {
-					HttpEntity entity = response.getEntity();
-
-					if (entity != null) {
-						for (String str : EntityUtils.toString(entity).split("\\n")) {
-							replogs.add(new ReplogEntity(str));
-						}
-
-						currentTick = response.getFirstHeader(HTTP_HEADER_LASTINCLUDED).getValue();
-					}
-
-					EntityUtils.consumeQuietly(entity);
-					checkMore = Boolean.valueOf(response.getFirstHeader(HTTP_HEADER_CHECKMORE).getValue());
-
-				} finally {
-					response.close();
-				}
-
-			} else if (status == 404) {
-				checkMore = false;
-
-			} else {
-				throw new ArangoException("unexpected http response status: " + status);
-			}
-		}
-
-		return replogs;
-	}
-
-
-	private class Slurper implements Runnable {
-		private List<ReplogEntity> replogCursorResultSet;
-		private String currentTick;
-
-		public Slurper(String lastProcessedTick) {
-			currentTick = lastProcessedTick;
-		}
-
-		@Override
-		public void run() {
-			logger.info("=== river-arangodb slurper running ... ===");
-
-			while (active) {
-				try {
-					replogCursorResultSet = processCollection(currentTick);
-					ReplogEntity last_item = null;
-
-					for (ReplogEntity item : replogCursorResultSet) {
-						if (logger.isDebugEnabled()) {
-							logger.debug("slurper: processReplogEntry [{}]", item);
-						}
-
-						processReplogEntry(item);
-						last_item = item;
-					}
-
-					if (last_item != null) {
-						currentTick = last_item.getTick();
-
-						if (logger.isDebugEnabled()) {
-							logger.debug("slurper: last_item currentTick [{}]", currentTick);
-						}
-					}
-
-					Thread.sleep(2000);
-
-				} catch (ArangoException aEx) {
-					logger.error("slurper: ArangoDB exception ", aEx);
-					active = false;
-
-				} catch (InterruptedException e) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("river-arangodb slurper interrupted");
-					}
-
-					logger.error("slurper: InterruptedException ", e);
-					Thread.currentThread().interrupt();
-				}
-			}
-		}
-
-		private List<ReplogEntity> processCollection(String currentTick) {
-			List<ReplogEntity> res = null;
-
-			try {
-				res = getNextArangoDBReplogs(currentTick);
-			} catch (ArangoException aEx) {
-				logger.error("ArangoDB getNextArangoDBReplogs threw an Arango exception", aEx);
-			} catch (JSONException jEx) {
-				logger.error("ArangoDB getNextArangoDBReplogs threw a JSON exception", jEx);
-			} catch (IOException iEx) {
-				logger.error("ArangoDB getNextArangoDBReplogs threw an IO exception", iEx);
-			}
-
-			return res;
-		}
-
-		private void processReplogEntry(final ReplogEntity entry) throws ArangoException, InterruptedException {
-			String documentHandle = entry.getKey();
-			OpType operation = entry.getOperation();
-			String replogTick = entry.getTick();
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("replog entry - collection [{}], operation [{}]", arangoCollection, operation);
-				logger.debug("replog processing item [{}]", entry);
-			}
-
-			if (logger.isTraceEnabled()) {
-				logger.trace("processReplogEntry - entry.getKey() [{}]", entry.getKey());
-				logger.trace("processReplogEntry - entry.getRev() [{}]", entry.getRev());
-				logger.trace("processReplogEntry - entry.getOperation() [{}]", entry.getOperation());
-				logger.trace("processReplogEntry - entry.getTick() [{}]", entry.getTick());
-				logger.trace("processReplogEntry - entry.getData() [{}]", entry.getData());
-			}
-
-			Map<String, Object> data = null;
-
-			if (OpType.INSERT == operation) {
-				data = entry.getData();
-			}
-			else if (OpType.UPDATE == operation) {
-				data = entry.getData();
-			}
-
-			if (data == null) {
-				data = new HashMap<String, Object>();
-			} else {
-				for (String excludeField : excludeFields) {
-					data.remove(excludeField);
-				}
-			}
-
-			addToStream(documentHandle, operation, replogTick, data);
-		}
-
-		private void addToStream(final String documentHandle, final OpType operation, final String tick, final Map<String, Object> data) throws InterruptedException {
-			if (logger.isDebugEnabled()) {
-				logger.debug("addToStream - operation [{}], currentTick [{}], data [{}]", operation, tick, data);
-			}
-
-			if (documentHandle.equals(REPLOG_ENTRY_UNDEFINED)) {
-				data.put(NAME_FIELD, arangoCollection);
-			}
-
-			data.put(REPLOG_FIELD_KEY, documentHandle);
-			data.put(REPLOG_FIELD_TICK, tick);
-			data.put(STREAM_FIELD_OPERATION, operation);
-
-			stream.put(data);
-		}
-	}
 
 	private class Indexer implements Runnable {
 		private final ESLogger logger = ESLoggerFactory.getLogger(this.getClass().getName());
