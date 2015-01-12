@@ -3,31 +3,16 @@ package org.elasticsearch.river.arangodb;
 import static ch.bind.philib.lang.ThreadUtil.interruptAndJoin;
 import static java.util.Arrays.asList;
 import static org.elasticsearch.common.collect.Maps.newHashMap;
-import static org.elasticsearch.river.arangodb.ArangoConstants.BULK_SIZE_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.BULK_TIMEOUT_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.COLLECTION_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.CREDENTIALS_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.DB_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.DEFAULT_DB_HOST;
-import static org.elasticsearch.river.arangodb.ArangoConstants.DEFAULT_DB_PORT;
-import static org.elasticsearch.river.arangodb.ArangoConstants.DROP_COLLECTION_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.EXCLUDE_FIELDS_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.HOST_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.INDEX_OBJECT;
+import static org.elasticsearch.common.xcontent.support.XContentMapValues.extractValue;
+import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeBooleanValue;
+import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeIntegerValue;
+import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeStringValue;
 import static org.elasticsearch.river.arangodb.ArangoConstants.LAST_TICK_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.NAME_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.OPTIONS_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.PASSWORD_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.PORT_FIELD;
 import static org.elasticsearch.river.arangodb.ArangoConstants.RIVER_TYPE;
-import static org.elasticsearch.river.arangodb.ArangoConstants.SCRIPT_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.SCRIPT_TYPE_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.THROTTLE_SIZE_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.TYPE_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.USER_FIELD;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -41,7 +26,6 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
-import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.river.AbstractRiverComponent;
 import org.elasticsearch.river.River;
@@ -60,7 +44,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 	private final String arangoDb;
 	private final String arangoCollection;
-	private final String arangoAdminUser;
+	private final String arangoAdminUsername;
 	private final String arangoAdminPassword;
 
 	private final String indexName;
@@ -110,104 +94,37 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			excludeFields.add(field);
 		}
 
-		if (settings.settings().containsKey(RIVER_TYPE)) {
-			Map<String, Object> arangoSettings = (Map<String, Object>) settings.settings().get(RIVER_TYPE);
+		Map<String, Object> localSettings = settings.settings();
+		arangoHost = nodeStringValue(extractValue("arangodb.host", localSettings), "localhost");
+		arangoPort = nodeIntegerValue(extractValue("arangodb.port", localSettings), 8529);
 
-			arangoHost = XContentMapValues.nodeStringValue(arangoSettings.get(HOST_FIELD), DEFAULT_DB_HOST);
-			arangoPort = XContentMapValues.nodeIntegerValue(arangoSettings.get(PORT_FIELD), DEFAULT_DB_PORT);
+		dropCollection = nodeBooleanValue(extractValue("arangodb.options.drop_collection", localSettings), true);
 
-			// ArangoDB options
-			if (arangoSettings.containsKey(OPTIONS_FIELD)) {
-				Map<String, Object> arangoOptionsSettings = (Map<String, Object>) arangoSettings.get(OPTIONS_FIELD);
-
-				dropCollection = XContentMapValues.nodeBooleanValue(arangoOptionsSettings.get(DROP_COLLECTION_FIELD), true);
-
-				if (arangoOptionsSettings.containsKey(EXCLUDE_FIELDS_FIELD)) {
-					Object excludeFieldsSettings = arangoOptionsSettings.get(EXCLUDE_FIELDS_FIELD);
-
-					logger.info("excludeFieldsSettings: " + excludeFieldsSettings);
-
-					if (XContentMapValues.isArray(excludeFieldsSettings)) {
-						ArrayList<String> fields = (ArrayList<String>) excludeFieldsSettings;
-
-						for (String field : fields) {
-							logger.info("Field: " + field);
-							excludeFields.add(field);
-						}
-					}
-				}
-			}
-			else {
-				dropCollection = true;
-			}
-
-			// Credentials
-			if (arangoSettings.containsKey(CREDENTIALS_FIELD)) {
-				Map<String, Object> credentials = (Map<String, Object>) arangoSettings.get(CREDENTIALS_FIELD);
-
-				arangoAdminUser = XContentMapValues.nodeStringValue(credentials.get(USER_FIELD), null);
-				arangoAdminPassword = XContentMapValues.nodeStringValue(credentials.get(PASSWORD_FIELD), null);
-			}
-			else {
-				arangoAdminUser = "";
-				arangoAdminPassword = "";
-			}
-
-			arangoDb = XContentMapValues.nodeStringValue(arangoSettings.get(DB_FIELD), riverName.name());
-			arangoCollection = XContentMapValues.nodeStringValue(arangoSettings.get(COLLECTION_FIELD), riverName.name());
-
-			if (arangoSettings.containsKey(SCRIPT_FIELD)) {
-				String scriptLang = "js";
-
-				if (arangoSettings.containsKey(SCRIPT_TYPE_FIELD)) {
-					scriptLang = arangoSettings.get(SCRIPT_TYPE_FIELD).toString();
-				}
-
-				String scriptString = arangoSettings.get(SCRIPT_FIELD).toString();
-				ScriptType scriptType = ScriptType.INLINE;
-				script = scriptService.executable(scriptLang, scriptString, scriptType, newHashMap());
-			}
-			else {
-				script = null;
-			}
-		}
-		else {
-			arangoHost = DEFAULT_DB_HOST;
-			arangoPort = DEFAULT_DB_PORT;
-
-			arangoDb = riverName.name();
-			arangoCollection = riverName.name();
-			arangoAdminUser = "";
-			arangoAdminPassword = "";
-			script = null;
-			dropCollection = true;
+		List<String> cfgExcludes = (List<String>) extractValue("arangodb.options.exclude_fields", localSettings);
+		if (cfgExcludes != null && !cfgExcludes.isEmpty()) {
+			excludeFields.addAll(cfgExcludes);
 		}
 
-		if (settings.settings().containsKey(INDEX_OBJECT)) {
-			Map<String, Object> indexSettings = (Map<String, Object>) settings.settings().get(INDEX_OBJECT);
+		arangoAdminUsername = nodeStringValue(extractValue("arangodb.credentials.username", localSettings), "");
+		arangoAdminPassword = nodeStringValue(extractValue("arangodb.credentials.password", localSettings), "");
 
-			indexName = XContentMapValues.nodeStringValue(indexSettings.get(NAME_FIELD), arangoDb);
-			typeName = XContentMapValues.nodeStringValue(indexSettings.get(TYPE_FIELD), arangoDb);
-			bulkSize = XContentMapValues.nodeIntegerValue(indexSettings.get(BULK_SIZE_FIELD), 100);
+		arangoDb = nodeStringValue(extractValue("arangodb.db", localSettings), riverName.name());
+		arangoCollection = nodeStringValue(extractValue("arangodb.collection", localSettings), riverName.name());
 
-			if (indexSettings.containsKey(BULK_TIMEOUT_FIELD)) {
-				bulkTimeout = TimeValue.parseTimeValue(
-						XContentMapValues.nodeStringValue(indexSettings.get(BULK_TIMEOUT_FIELD), "10ms"),
-						TimeValue.timeValueMillis(10));
-			} else {
-				bulkTimeout = TimeValue.timeValueMillis(10);
-			}
+		String scriptString = nodeStringValue(extractValue("arangodb.script", localSettings), null);
+		String scriptLang = nodeStringValue(extractValue("arangodb.scriptType", localSettings), "js");
 
-			throttleSize = XContentMapValues.nodeIntegerValue(indexSettings.get(THROTTLE_SIZE_FIELD), bulkSize * 5);
+		ScriptType scriptType = ScriptType.INLINE;
+		script = scriptService.executable(scriptLang, scriptString, scriptType, newHashMap());
 
-		}
-		else {
-			indexName = arangoDb;
-			typeName = arangoDb;
-			bulkSize = 100;
-			bulkTimeout = TimeValue.timeValueMillis(10);
-			throttleSize = bulkSize * 5;
-		}
+		indexName = nodeStringValue(extractValue("index.name", localSettings), riverName.name());
+		typeName = nodeStringValue(extractValue("index.type", localSettings), riverName.name());
+		bulkSize = nodeIntegerValue(extractValue("index.bulk_size", localSettings), 100);
+
+		String bulkTimeoutString = nodeStringValue(extractValue("index.bulk_timeout", localSettings), "10ms");
+		bulkTimeout = TimeValue.parseTimeValue(bulkTimeoutString, null);
+
+		throttleSize = nodeIntegerValue(extractValue("index.throttle_size", localSettings), bulkSize * 5);
 
 		if (throttleSize == -1) {
 			stream = new LinkedTransferQueue<Map<String, Object>>();
@@ -240,7 +157,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		String lastProcessedTick = fetchLastTick(arangoCollection);
 
-		slurper = new Slurper(lastProcessedTick, excludeFields, arangoCollection, arangoDb, arangoAdminUser, arangoAdminPassword, arangoHost, arangoPort, stream, this);
+		slurper = new Slurper(lastProcessedTick, excludeFields, arangoCollection, arangoDb, arangoAdminUsername, arangoAdminPassword, arangoHost, arangoPort, stream, this);
 		slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(slurper);
 
 		indexer = new Indexer(this, client, typeName, indexName, arangoCollection, bulkTimeout, bulkSize, script, dropCollection, riverIndexName, riverName, stream);

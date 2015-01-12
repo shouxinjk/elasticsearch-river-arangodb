@@ -3,7 +3,6 @@ TODO / Refactorings
 ===================
 
 * which java version to support? currently it's 1.6
-* check if we actually have multiple slurpers (they're stored in a list)
 * org.json dependency
   * the old version is really old... the newer versions won't work with java6
 * ReplogEntity

@@ -68,21 +68,25 @@
 			<version>${jackson.version}</version>
 		</dependency>
 		<dependency>
-				<groupId>org.codehaus.jsr166-mirror</groupId>
-				<artifactId>jsr166</artifactId>
-				<version>${jsr166.version}</version>
+			<groupId>org.codehaus.jsr166-mirror</groupId>
+			<artifactId>jsr166</artifactId>
+			<version>${jsr166.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.swisstech</groupId>
+			<artifactId>swissarmyknife</artifactId>
+			<version>1.1.7</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.bind</groupId>
+			<artifactId>philib</artifactId>
+			<version>0.12.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.testng</groupId>
 			<artifactId>testng</artifactId>
 			<version>6.8.13</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>net.swisstech</groupId>
-			<artifactId>swissarmyknife</artifactId>
-			<version>1.1.7</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
