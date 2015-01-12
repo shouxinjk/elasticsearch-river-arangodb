@@ -9,8 +9,4 @@ public interface ArangoConstants {
 	String REPLOG_FIELD_KEY = "key";
 	String REPLOG_FIELD_TICK = "tick";
 	String STREAM_FIELD_OPERATION = "op";
-
-	String HTTP_PROTOCOL = "http";
-	String HTTP_HEADER_CHECKMORE = "x-arango-replication-checkmore";
-	String HTTP_HEADER_LASTINCLUDED = "x-arango-replication-lastincluded";
 }

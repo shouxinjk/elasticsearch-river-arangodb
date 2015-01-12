@@ -1,8 +1,5 @@
 package org.elasticsearch.river.arangodb;
 
-import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_CHECKMORE;
-import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_LASTINCLUDED;
-import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_PROTOCOL;
 import static org.elasticsearch.river.arangodb.ArangoConstants.LAST_TICK_FIELD;
 import static org.elasticsearch.river.arangodb.ArangoConstants.NAME_FIELD;
 import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_ENTRY_UNDEFINED;
@@ -46,6 +43,9 @@ import org.json.JSONException;
 public class Slurper implements Runnable, Closeable {
 
 	private static final ESLogger logger = ESLoggerFactory.getLogger(Slurper.class.getName());
+
+	private static final String HTTP_HEADER_CHECKMORE = "x-arango-replication-checkmore";
+	private static final String HTTP_HEADER_LASTINCLUDED = "x-arango-replication-lastincluded";
 
 	private volatile boolean keepRunning = true;
 
