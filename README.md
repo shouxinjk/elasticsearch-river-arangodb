@@ -66,7 +66,7 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
                 "internal1",
                 "internal2"
             ]
-        }
+        },
         "script" : "ctx.doc.title = ctx.doc.manufacturer + \" \" + ctx.doc.model;"
     },
     "index": {
