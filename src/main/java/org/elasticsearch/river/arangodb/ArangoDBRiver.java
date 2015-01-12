@@ -58,7 +58,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 	private final String riverIndexName;
 
-	private final List<ServerAddress> arangoServers = new ArrayList<ServerAddress>();
 	private final String arangoDb;
 	private final String arangoCollection;
 	private final String arangoAdminUser;
@@ -116,8 +115,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 			arangoHost = XContentMapValues.nodeStringValue(arangoSettings.get(HOST_FIELD), DEFAULT_DB_HOST);
 			arangoPort = XContentMapValues.nodeIntegerValue(arangoSettings.get(PORT_FIELD), DEFAULT_DB_PORT);
-
-			arangoServers.add(new ServerAddress(arangoHost, arangoPort));
 
 			// ArangoDB options
 			if (arangoSettings.containsKey(OPTIONS_FIELD)) {
@@ -178,8 +175,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			arangoHost = DEFAULT_DB_HOST;
 			arangoPort = DEFAULT_DB_PORT;
 
-			arangoServers.add(new ServerAddress(arangoHost, arangoPort));
-
 			arangoDb = riverName.name();
 			arangoCollection = riverName.name();
 			arangoAdminUser = "";
@@ -224,9 +219,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 	@Override
 	public void start() {
-		for (ServerAddress server : arangoServers) {
-			logger.info("using arangodb server(s): host [{}], port [{}]", server.getHost(), server.getPort());
-		}
+		logger.info("using arangodb server(s): host [{}], port [{}]", arangoHost, arangoPort);
 
 		logger.info("starting arangodb stream. options: throttlesize [{}], db [{}], collection [{}], script [{}], indexing to [{}]/[{}]",
 				throttleSize,
@@ -254,7 +247,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		String lastProcessedTick = fetchLastTick(arangoCollection);
 
-		Slurper slurper = new Slurper(lastProcessedTick, excludeFields, arangoCollection, arangoDb, arangoAdminUser, arangoAdminPassword, arangoServers, stream, this);
+		Slurper slurper = new Slurper(lastProcessedTick, excludeFields, arangoCollection, arangoDb, arangoAdminUser, arangoAdminPassword, arangoHost, arangoPort, stream, this);
 		Thread slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(slurper);
 
 		slurpers.add(slurper);

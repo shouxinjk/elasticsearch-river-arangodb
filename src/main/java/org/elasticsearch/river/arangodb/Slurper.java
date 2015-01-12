@@ -1,6 +1,5 @@
 package org.elasticsearch.river.arangodb;
 
-import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
 import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_CHECKMORE;
 import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_LASTINCLUDED;
@@ -46,7 +45,8 @@ public class Slurper implements Runnable {
 	private final String arangoDb;
 	private final String arangoAdminUser;
 	private final String arangoAdminPassword;
-	private final List<ServerAddress> arangoServers;
+	private final String arangoHost;
+	private final int arangoPort;
 	private final BlockingQueue<Map<String, Object>> stream;
 	private final ArangoDBRiver river;
 
@@ -57,7 +57,8 @@ public class Slurper implements Runnable {
 		String arangoDb, //
 		String arangoAdminUser, //
 		String arangoAdminPassword, //
-		List<ServerAddress> arangoServers, //
+		String arangoHost, //
+		int arangoPort, //
 		BlockingQueue<Map<String, Object>> stream, //
 		ArangoDBRiver river //
 	) {
@@ -67,7 +68,8 @@ public class Slurper implements Runnable {
 		this.arangoDb = arangoDb;
 		this.arangoAdminUser = arangoAdminUser;
 		this.arangoAdminPassword = arangoAdminPassword;
-		this.arangoServers = unmodifiableList(arangoServers);
+		this.arangoHost = arangoHost;
+		this.arangoPort = arangoPort;
 		this.stream = stream;
 		this.river = river;
 	}
@@ -237,14 +239,9 @@ public class Slurper implements Runnable {
 		return replogs;
 	}
 
-	private ServerAddress getActiveMaster() {
-		return arangoServers.get(0);
-	}
-
 	private String getReplogUri() {
-		ServerAddress activeServerAddress = getActiveMaster();
 		String uri = HTTP_PROTOCOL + "://";
-		uri += activeServerAddress.getHost() + ":" + activeServerAddress.getPort();
+		uri += arangoHost + ":" + arangoPort;
 		uri += "/_db/" + arangoDb + "/_api/replication/dump?collection=";
 		uri += arangoCollection + "&from=";
 		return uri;
@@ -252,9 +249,8 @@ public class Slurper implements Runnable {
 
 	private CloseableHttpClient getArangoHttpClient() {
 		if (arangoHttpClient == null) {
-			ServerAddress activeServerAddress = getActiveMaster();
 			CredentialsProvider credsProvider = new BasicCredentialsProvider();
-			AuthScope authScope = new AuthScope(activeServerAddress.getHost(), activeServerAddress.getPort());
+			AuthScope authScope = new AuthScope(arangoHost, arangoPort);
 			UsernamePasswordCredentials unpwCreds = new UsernamePasswordCredentials(arangoAdminUser, arangoAdminPassword);
 			credsProvider.setCredentials(authScope, unpwCreds);
 			arangoHttpClient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
