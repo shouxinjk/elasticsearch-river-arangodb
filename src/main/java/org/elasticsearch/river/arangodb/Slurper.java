@@ -1,6 +1,5 @@
 package org.elasticsearch.river.arangodb;
 
-import static java.util.Collections.unmodifiableSet;
 import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_CHECKMORE;
 import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_LASTINCLUDED;
 import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_PROTOCOL;
@@ -16,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 import org.apache.http.HttpEntity;
@@ -37,42 +35,19 @@ public class Slurper implements Runnable, Closeable {
 
 	private static final ESLogger logger = ESLoggerFactory.getLogger(Slurper.class.getName());
 
-	private List<ReplogEntity> replogCursorResultSet;
 	private String currentTick;
+	private List<ReplogEntity> replogCursorResultSet;
 	private CloseableHttpClient arangoHttpClient;
 
-	private final Set<String> excludeFields;
-	private final String arangoCollection;
-	private final String arangoDb;
-	private final String arangoAdminUser;
-	private final String arangoAdminPassword;
-	private final String arangoHost;
-	private final int arangoPort;
-	private final BlockingQueue<Map<String, Object>> stream;
 	private final ArangoDBRiver river;
+	private final ArangoDbConfig config;
+	private final BlockingQueue<Map<String, Object>> stream;
 
-	public Slurper( //
-	String lastProcessedTick, //
-		Set<String> excludeFields, //
-		String arangoCollection, //
-		String arangoDb, //
-		String arangoAdminUser, //
-		String arangoAdminPassword, //
-		String arangoHost, //
-		int arangoPort, //
-		BlockingQueue<Map<String, Object>> stream, //
-		ArangoDBRiver river //
-	) {
-		currentTick = lastProcessedTick;
-		this.excludeFields = unmodifiableSet(excludeFields);
-		this.arangoCollection = arangoCollection;
-		this.arangoDb = arangoDb;
-		this.arangoAdminUser = arangoAdminUser;
-		this.arangoAdminPassword = arangoAdminPassword;
-		this.arangoHost = arangoHost;
-		this.arangoPort = arangoPort;
-		this.stream = stream;
+	public Slurper(ArangoDBRiver river, ArangoDbConfig config, String currentTick, BlockingQueue<Map<String, Object>> stream) {
 		this.river = river;
+		this.config = config;
+		this.currentTick = currentTick;
+		this.stream = stream;
 	}
 
 	@Override
@@ -144,7 +119,7 @@ public class Slurper implements Runnable, Closeable {
 		String replogTick = entry.getTick();
 
 		if (logger.isDebugEnabled()) {
-			logger.debug("replog entry - collection [{}], operation [{}]", arangoCollection, operation);
+			logger.debug("replog entry - collection [{}], operation [{}]", config.getArangodbCollection(), operation);
 			logger.debug("replog processing item [{}]", entry);
 		}
 
@@ -169,7 +144,7 @@ public class Slurper implements Runnable, Closeable {
 			data = new HashMap<String, Object>();
 		}
 		else {
-			for (String excludeField : excludeFields) {
+			for (String excludeField : config.getArangodbOptionsExcludeFields()) {
 				data.remove(excludeField);
 			}
 		}
@@ -183,7 +158,7 @@ public class Slurper implements Runnable, Closeable {
 		}
 
 		if (documentHandle.equals(REPLOG_ENTRY_UNDEFINED)) {
-			data.put(NAME_FIELD, arangoCollection);
+			data.put(NAME_FIELD, config.getArangodbCollection());
 		}
 
 		data.put(REPLOG_FIELD_KEY, documentHandle);
@@ -242,17 +217,17 @@ public class Slurper implements Runnable, Closeable {
 
 	private String getReplogUri() {
 		String uri = HTTP_PROTOCOL + "://";
-		uri += arangoHost + ":" + arangoPort;
-		uri += "/_db/" + arangoDb + "/_api/replication/dump?collection=";
-		uri += arangoCollection + "&from=";
+		uri += config.getArangodbHost() + ":" + config.getArangodbPort();
+		uri += "/_db/" + config.getArangodbDatabase() + "/_api/replication/dump?collection=";
+		uri += config.getArangodbCollection() + "&from=";
 		return uri;
 	}
 
 	private CloseableHttpClient getArangoHttpClient() {
 		if (arangoHttpClient == null) {
 			CredentialsProvider credsProvider = new BasicCredentialsProvider();
-			AuthScope authScope = new AuthScope(arangoHost, arangoPort);
-			UsernamePasswordCredentials unpwCreds = new UsernamePasswordCredentials(arangoAdminUser, arangoAdminPassword);
+			AuthScope authScope = new AuthScope(config.getArangodbHost(), config.getArangodbPort());
+			UsernamePasswordCredentials unpwCreds = new UsernamePasswordCredentials(config.getArangodbCredentialsUsername(), config.getArangodbCredentialsPassword());
 			credsProvider.setCredentials(authScope, unpwCreds);
 			arangoHttpClient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
 			logger.info("created ArangoDB http client");

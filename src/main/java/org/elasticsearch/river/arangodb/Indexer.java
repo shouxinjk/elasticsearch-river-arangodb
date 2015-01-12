@@ -22,7 +22,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.StopWatch;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -38,41 +37,16 @@ public class Indexer implements Runnable {
 	private StopWatch sw;
 
 	private final ArangoDBRiver river;
+	private final ArangoDbConfig config;
 	private final Client client;
-	private final String typeName;
-	private final String indexName;
-	private final String arangoCollection;
-	private final TimeValue bulkTimeout;
-	private final int bulkSize;
-	private final ExecutableScript script;
-	private final boolean dropCollection;
 	private final String riverIndexName;
 	private final RiverName riverName;
 	private final BlockingQueue<Map<String, Object>> stream;
 
-	public Indexer( //
-	ArangoDBRiver river, //
-		Client client, //
-		String typeName, //
-		String indexName, //
-		String arangoCollection, //
-		TimeValue bulkTimeout, //
-		int bulkSize, //
-		ExecutableScript script, //
-		boolean dropCollection, //
-		String riverIndexName, //
-		RiverName riverName, //
-		BlockingQueue<Map<String, Object>> stream //
-	) {
+	public Indexer(ArangoDBRiver river, ArangoDbConfig config, Client client, String riverIndexName, RiverName riverName, BlockingQueue<Map<String, Object>> stream) {
 		this.river = river;
+		this.config = config;
 		this.client = client;
-		this.typeName = typeName;
-		this.indexName = indexName;
-		this.arangoCollection = arangoCollection;
-		this.bulkTimeout = bulkTimeout;
-		this.bulkSize = bulkSize;
-		this.script = script;
-		this.dropCollection = dropCollection;
 		this.riverIndexName = riverIndexName;
 		this.riverName = riverName;
 		this.stream = stream;
@@ -97,16 +71,16 @@ public class Indexer implements Runnable {
 				Map<String, Object> data = stream.take();
 				lastTick = updateBulkRequest(bulk, data);
 
-				while ((data = stream.poll(bulkTimeout.millis(), MILLISECONDS)) != null) {
+				while ((data = stream.poll(config.getIndexBulkTimeout().millis(), MILLISECONDS)) != null) {
 					lastTick = updateBulkRequest(bulk, data);
-					if (bulk.numberOfActions() >= bulkSize) {
+					if (bulk.numberOfActions() >= config.getIndexBulkSize()) {
 						break;
 					}
 				}
 
 				// 2. Update the Tick
 				if (lastTick != null) {
-					updateLastTick(arangoCollection, lastTick, bulk);
+					updateLastTick(config.getArangodbCollection(), lastTick, bulk);
 				}
 
 				// 3. Execute the bulk requests
@@ -156,51 +130,50 @@ public class Indexer implements Runnable {
 			logger.warn("failed to parse {}", e);
 		}
 
-		if (script != null) {
-			if (ctx != null) {
-				ctx.put("doc", data);
-				ctx.put("operation", operation);
+		ExecutableScript script = config.getArangodbScript();
+		if (script != null && ctx != null) {
+			ctx.put("doc", data);
+			ctx.put("operation", operation);
 
-				if (!objectId.isEmpty()) {
-					ctx.put("id", objectId);
-				}
+			if (!objectId.isEmpty()) {
+				ctx.put("id", objectId);
+			}
 
-				if (logger.isDebugEnabled()) {
-					logger.debug("Context before script executed: {}", ctx);
-				}
+			if (logger.isDebugEnabled()) {
+				logger.debug("Context before script executed: {}", ctx);
+			}
 
-				script.setNextVar("ctx", ctx);
+			script.setNextVar("ctx", ctx);
 
-				try {
-					script.run();
-					ctx = (Map<String, Object>) script.unwrap(ctx);
-				}
-				catch (Exception e) {
-					logger.warn("failed to script process {}, ignoring", e, ctx);
-				}
+			try {
+				script.run();
+				ctx = (Map<String, Object>) script.unwrap(ctx);
+			}
+			catch (Exception e) {
+				logger.warn("failed to script process {}, ignoring", e, ctx);
+			}
 
-				if (logger.isDebugEnabled()) {
-					logger.debug("Context after script executed: {}", ctx);
-				}
+			if (logger.isDebugEnabled()) {
+				logger.debug("Context after script executed: {}", ctx);
+			}
 
-				if (ctx.containsKey("ignore") && ctx.get("ignore").equals(Boolean.TRUE)) {
-					logger.debug("From script ignore document id: {}", objectId);
-					return replogTick;
-				}
+			if (ctx.containsKey("ignore") && ctx.get("ignore").equals(Boolean.TRUE)) {
+				logger.debug("From script ignore document id: {}", objectId);
+				return replogTick;
+			}
 
-				if (ctx.containsKey("deleted") && ctx.get("deleted").equals(Boolean.TRUE)) {
-					ctx.put("operation", "DELETE");
-				}
+			if (ctx.containsKey("deleted") && ctx.get("deleted").equals(Boolean.TRUE)) {
+				ctx.put("operation", "DELETE");
+			}
 
-				if (ctx.containsKey("doc")) {
-					data = (Map<String, Object>) ctx.get("doc");
-					logger.debug("From script document: {}", data);
-				}
+			if (ctx.containsKey("doc")) {
+				data = (Map<String, Object>) ctx.get("doc");
+				logger.debug("From script document: {}", data);
+			}
 
-				if (ctx.containsKey("operation")) {
-					operation = OpType.valueOf(ctx.get("operation").toString());
-					logger.debug("From script operation: {}", operation);
-				}
+			if (ctx.containsKey("operation")) {
+				operation = OpType.valueOf(ctx.get("operation").toString());
+				logger.debug("From script operation: {}", operation);
 			}
 		}
 
@@ -238,8 +211,8 @@ public class Indexer implements Runnable {
 					logger.debug("Delete operation - id: {}, data [{}]", objectId, data);
 				}
 
-				if (REPLOG_ENTRY_UNDEFINED.equals(objectId) && data.get(NAME_FIELD).equals(arangoCollection)) {
-					if (dropCollection) {
+				if (REPLOG_ENTRY_UNDEFINED.equals(objectId) && data.get(NAME_FIELD).equals(config.getArangodbCollection())) {
+					if (config.isArangodbOptionsDropcollection()) {
 						logger.info("Drop collection request [{}], [{}]", index, type);
 
 						bulk.request().requests().clear();
@@ -294,21 +267,17 @@ public class Indexer implements Runnable {
 
 	private String extractType(Map<String, Object> ctx) {
 		String type = (String) ctx.get("_type");
-
 		if (type == null) {
-			type = typeName;
+			return config.getIndexType();
 		}
-
 		return type;
 	}
 
 	private String extractIndex(Map<String, Object> ctx) {
 		String index = (String) ctx.get("_index");
-
 		if (index == null) {
-			index = indexName;
+			return config.getIndexName();
 		}
-
 		return index;
 	}
 
@@ -316,7 +285,6 @@ public class Indexer implements Runnable {
 		long totalDocuments = deletedDocuments + insertedDocuments;
 		long totalTimeInSeconds = sw.stop().totalTime().seconds();
 		long totalDocumentsPerSecond = (totalTimeInSeconds == 0) ? totalDocuments : totalDocuments / totalTimeInSeconds;
-
 		logger.info("Indexed {} documents, {} insertions {}, updates, {} deletions, {} documents per second", totalDocuments, insertedDocuments, updatedDocuments, deletedDocuments, totalDocumentsPerSecond);
 	}
 }
