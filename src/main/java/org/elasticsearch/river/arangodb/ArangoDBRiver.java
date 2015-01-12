@@ -139,7 +139,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 						}
 					}
 				}
-			} else {
+			}
+			else {
 				dropCollection = true;
 			}
 
@@ -149,8 +150,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 				arangoAdminUser = XContentMapValues.nodeStringValue(credentials.get(USER_FIELD), null);
 				arangoAdminPassword = XContentMapValues.nodeStringValue(credentials.get(PASSWORD_FIELD), null);
-
-			} else {
+			}
+			else {
 				arangoAdminUser = "";
 				arangoAdminPassword = "";
 			}
@@ -168,10 +169,12 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 				String scriptString = arangoSettings.get(SCRIPT_FIELD).toString();
 				ScriptType scriptType = ScriptType.INLINE;
 				script = scriptService.executable(scriptLang, scriptString, scriptType, newHashMap());
-			} else {
+			}
+			else {
 				script = null;
 			}
-		} else {
+		}
+		else {
 			arangoHost = DEFAULT_DB_HOST;
 			arangoPort = DEFAULT_DB_PORT;
 
@@ -202,7 +205,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 			throttleSize = XContentMapValues.nodeIntegerValue(indexSettings.get(THROTTLE_SIZE_FIELD), bulkSize * 5);
 
-		} else {
+		}
+		else {
 			indexName = arangoDb;
 			typeName = arangoDb;
 			bulkSize = 100;
@@ -212,7 +216,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		if (throttleSize == -1) {
 			stream = new LinkedTransferQueue<Map<String, Object>>();
-		} else {
+		}
+		else {
 			stream = new ArrayBlockingQueue<Map<String, Object>>(throttleSize);
 		}
 	}
@@ -233,12 +238,15 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		try {
 			client.admin().indices().prepareCreate(indexName).execute().actionGet();
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			if (ExceptionsHelper.unwrapCause(e) instanceof IndexAlreadyExistsException) {
 				// ok
-			} else if (ExceptionsHelper.unwrapCause(e) instanceof ClusterBlockException) {
+			}
+			else if (ExceptionsHelper.unwrapCause(e) instanceof ClusterBlockException) {
 				// ..
-			} else {
+			}
+			else {
 				logger.warn("failed to create index [{}], disabling river...", e, indexName);
 				return;
 			}
@@ -306,10 +314,12 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 					logger.info("found last tick for collection {}: {}", namespace, lastTick);
 
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					logger.error("error fetching last tick for collection {}: {}", namespace, ex);
 				}
-			} else {
+			}
+			else {
 				logger.info("fetching last tick: indexState is null");
 			}
 		}

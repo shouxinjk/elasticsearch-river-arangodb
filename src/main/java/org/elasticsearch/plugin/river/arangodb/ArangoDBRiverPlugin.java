@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.elasticsearch.plugin.river.arangodb;
 
 import org.elasticsearch.common.inject.Inject;
@@ -25,18 +24,21 @@ import org.elasticsearch.river.RiversModule;
 import org.elasticsearch.river.arangodb.ArangoDBRiverModule;
 
 public class ArangoDBRiverPlugin extends AbstractPlugin {
-  @Inject public ArangoDBRiverPlugin() {
-  }
 
-  @Override public String name() {
-    return "river-arangodb";
-  }
+	@Inject
+	public ArangoDBRiverPlugin() {}
 
-  @Override public String description() {
-    return "ArangoDB River Plugin";
-  }
+	@Override
+	public String name() {
+		return "river-arangodb";
+	}
 
-  public void onModule(RiversModule module) {
-      module.registerRiver("arangodb", ArangoDBRiverModule.class);
-  }
+	@Override
+	public String description() {
+		return "ArangoDB River Plugin";
+	}
+
+	public void onModule(RiversModule module) {
+		module.registerRiver("arangodb", ArangoDBRiverModule.class);
+	}
 }

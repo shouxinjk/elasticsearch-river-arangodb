@@ -5,7 +5,8 @@ import org.elasticsearch.river.River;
 
 public class ArangoDBRiverModule extends AbstractModule {
 
-  @Override protected void configure() {
-    bind(River.class).to(ArangoDBRiver.class).asEagerSingleton();
-  }
+	@Override
+	protected void configure() {
+		bind(River.class).to(ArangoDBRiver.class).asEagerSingleton();
+	}
 }
