@@ -53,10 +53,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		this.slurperThreadFactory = slurperThreadFactory;
 		this.indexerThreadFactory = indexerThreadFactory;
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("Prefix: [{}] - name: [{}]", logger.getPrefix(), logger.getName());
-			logger.debug("River settings: [{}]", settings.settings());
-		}
+		logger.debug("Prefix: [{}] - name: [{}]", logger.getPrefix(), logger.getName());
+		logger.debug("River settings: [{}]", settings.settings());
 	}
 
 	@Override

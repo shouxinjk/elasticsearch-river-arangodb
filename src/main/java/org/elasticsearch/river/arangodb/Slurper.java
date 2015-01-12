@@ -95,9 +95,7 @@ public class Slurper implements Runnable, Closeable {
 				ReplogEntity last_item = null;
 
 				for (ReplogEntity item : replogCursorResultSet) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("slurper: processReplogEntry [{}]", item);
-					}
+					logger.debug("slurper: processReplogEntry [{}]", item);
 
 					processReplogEntry(item);
 					last_item = item;
@@ -106,9 +104,7 @@ public class Slurper implements Runnable, Closeable {
 				if (last_item != null) {
 					currentTick = last_item.getTick();
 
-					if (logger.isDebugEnabled()) {
-						logger.debug("slurper: last_item currentTick [{}]", currentTick);
-					}
+					logger.debug("slurper: last_item currentTick [{}]", currentTick);
 				}
 
 				Thread.sleep(2000);
@@ -117,9 +113,7 @@ public class Slurper implements Runnable, Closeable {
 				logger.error("slurper: ArangoDB exception ", e);
 			}
 			catch (InterruptedException e) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("river-arangodb slurper interrupted");
-				}
+				logger.debug("river-arangodb slurper interrupted");
 				logger.error("slurper: InterruptedException ", e);
 				Thread.currentThread().interrupt();
 			}
@@ -150,18 +144,13 @@ public class Slurper implements Runnable, Closeable {
 		OpType operation = entry.getOperation();
 		String replogTick = entry.getTick();
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("replog entry - collection [{}], operation [{}]", config.getArangodbCollection(), operation);
-			logger.debug("replog processing item [{}]", entry);
-		}
-
-		if (logger.isTraceEnabled()) {
-			logger.trace("processReplogEntry - entry.getKey() [{}]", entry.getKey());
-			logger.trace("processReplogEntry - entry.getRev() [{}]", entry.getRev());
-			logger.trace("processReplogEntry - entry.getOperation() [{}]", entry.getOperation());
-			logger.trace("processReplogEntry - entry.getTick() [{}]", entry.getTick());
-			logger.trace("processReplogEntry - entry.getData() [{}]", entry.getData());
-		}
+		logger.debug("replog entry - collection [{}], operation [{}]", config.getArangodbCollection(), operation);
+		logger.debug("replog processing item [{}]", entry);
+		logger.trace("processReplogEntry - entry.getKey() [{}]", entry.getKey());
+		logger.trace("processReplogEntry - entry.getRev() [{}]", entry.getRev());
+		logger.trace("processReplogEntry - entry.getOperation() [{}]", entry.getOperation());
+		logger.trace("processReplogEntry - entry.getTick() [{}]", entry.getTick());
+		logger.trace("processReplogEntry - entry.getData() [{}]", entry.getData());
 
 		Map<String, Object> data = null;
 
@@ -185,9 +174,7 @@ public class Slurper implements Runnable, Closeable {
 	}
 
 	private void addToStream(final String documentHandle, final OpType operation, final String tick, final Map<String, Object> data) throws InterruptedException {
-		if (logger.isDebugEnabled()) {
-			logger.debug("addToStream - operation [{}], currentTick [{}], data [{}]", operation, tick, data);
-		}
+		logger.debug("addToStream - operation [{}], currentTick [{}], data [{}]", operation, tick, data);
 
 		if (documentHandle.equals(REPLOG_ENTRY_UNDEFINED)) {
 			data.put(NAME_FIELD, config.getArangodbCollection());
@@ -204,9 +191,7 @@ public class Slurper implements Runnable, Closeable {
 		List<ReplogEntity> replogs = new ArrayList<ReplogEntity>();
 		String uri = replogUriTemplate + currentTick;
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("http uri = {}", uri);
-		}
+		logger.debug("http uri = {}", uri);
 
 		boolean checkMore = true;
 

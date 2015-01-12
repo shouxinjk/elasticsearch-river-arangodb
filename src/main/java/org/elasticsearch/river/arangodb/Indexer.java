@@ -108,9 +108,7 @@ public class Indexer implements Runnable, Closeable {
 				}
 			}
 			catch (InterruptedException e) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("river-arangodb indexer interrupted");
-				}
+				logger.debug("river-arangodb indexer interrupted");
 				Thread.currentThread().interrupt();
 			}
 			logStatistics(sw);
@@ -129,10 +127,8 @@ public class Indexer implements Runnable, Closeable {
 		data.remove(REPLOG_FIELD_TICK);
 		data.remove(STREAM_FIELD_OPERATION);
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("updateBulkRequest for id: [{}], operation: [{}]", objectId, operation);
-			logger.debug("data: [{}]", data);
-		}
+		logger.debug("updateBulkRequest for id: [{}], operation: [{}]", objectId, operation);
+		logger.debug("data: [{}]", data);
 
 		Map<String, Object> ctx = null;
 
@@ -152,9 +148,7 @@ public class Indexer implements Runnable, Closeable {
 				ctx.put("id", objectId);
 			}
 
-			if (logger.isDebugEnabled()) {
-				logger.debug("Context before script executed: {}", ctx);
-			}
+			logger.debug("Context before script executed: {}", ctx);
 
 			script.setNextVar("ctx", ctx);
 
@@ -166,9 +160,7 @@ public class Indexer implements Runnable, Closeable {
 				logger.warn("failed to script process {}, ignoring", e, ctx);
 			}
 
-			if (logger.isDebugEnabled()) {
-				logger.debug("Context after script executed: {}", ctx);
-			}
+			logger.debug("Context after script executed: {}", ctx);
 
 			if (ctx.containsKey("ignore") && ctx.get("ignore").equals(Boolean.TRUE)) {
 				logger.debug("From script ignore document id: {}", objectId);
@@ -196,23 +188,17 @@ public class Indexer implements Runnable, Closeable {
 			String parent = extractParent(ctx);
 			String routing = extractRouting(ctx);
 
-			if (logger.isDebugEnabled()) {
-				logger.debug("Operation: {} - index: {} - type: {} - routing: {} - parent: {}", operation, index, type, routing, parent);
-			}
+			logger.debug("Operation: {} - index: {} - type: {} - routing: {} - parent: {}", operation, index, type, routing, parent);
 
 			if (operation == OpType.INSERT) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Insert operation - id: {}", operation, objectId);
-				}
+				logger.debug("Insert operation - id: {}", operation, objectId);
 
 				bulk.add(indexRequest(index).type(type).id(objectId).source(build(data, objectId)).routing(routing).parent(parent));
 
 				insertedDocuments++;
 			}
 			else if (operation == OpType.UPDATE) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Update operation - id: {}", objectId);
-				}
+				logger.debug("Update operation - id: {}", objectId);
 
 				bulk.add(new DeleteRequest(index, type, objectId).routing(routing).parent(parent));
 				bulk.add(indexRequest(index).type(type).id(objectId).source(build(data, objectId)).routing(routing).parent(parent));
@@ -220,9 +206,7 @@ public class Indexer implements Runnable, Closeable {
 				updatedDocuments++;
 			}
 			else if (operation == OpType.DELETE) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Delete operation - id: {}, data [{}]", objectId, data);
-				}
+				logger.debug("Delete operation - id: {}, data [{}]", objectId, data);
 
 				if (REPLOG_ENTRY_UNDEFINED.equals(objectId) && data.get(NAME_FIELD).equals(config.getArangodbCollection())) {
 					if (config.isArangodbOptionsDropcollection()) {
