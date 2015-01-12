@@ -11,6 +11,7 @@ import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_FIELD_TICK
 import static org.elasticsearch.river.arangodb.ArangoConstants.RIVER_TYPE;
 import static org.elasticsearch.river.arangodb.ArangoConstants.STREAM_FIELD_OPERATION;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -28,23 +29,23 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.river.RiverName;
 import org.elasticsearch.script.ExecutableScript;
 
-public class Indexer implements Runnable {
+public class Indexer implements Runnable, Closeable {
 
 	private final ESLogger logger = ESLoggerFactory.getLogger(this.getClass().getName());
+
+	private volatile boolean keepRunning = true;
+
 	private int deletedDocuments = 0;
 	private int insertedDocuments = 0;
 	private int updatedDocuments = 0;
-	private StopWatch sw;
 
-	private final ArangoDBRiver river;
 	private final ArangoDbConfig config;
 	private final Client client;
 	private final String riverIndexName;
 	private final RiverName riverName;
 	private final BlockingQueue<Map<String, Object>> stream;
 
-	public Indexer(ArangoDBRiver river, ArangoDbConfig config, Client client, String riverIndexName, RiverName riverName, BlockingQueue<Map<String, Object>> stream) {
-		this.river = river;
+	public Indexer(ArangoDbConfig config, Client client, String riverIndexName, RiverName riverName, BlockingQueue<Map<String, Object>> stream) {
 		this.config = config;
 		this.client = client;
 		this.riverIndexName = riverIndexName;
@@ -56,8 +57,8 @@ public class Indexer implements Runnable {
 	public void run() {
 		logger.info("=== river-arangodb indexer running ... ===");
 
-		while (river.isActive()) {
-			sw = new StopWatch().start();
+		while (keepRunning) {
+			StopWatch sw = new StopWatch().start();
 
 			deletedDocuments = 0;
 			insertedDocuments = 0;
@@ -100,7 +101,7 @@ public class Indexer implements Runnable {
 				}
 				Thread.currentThread().interrupt();
 			}
-			logStatistics();
+			logStatistics(sw);
 		}
 	}
 
@@ -281,10 +282,15 @@ public class Indexer implements Runnable {
 		return index;
 	}
 
-	private void logStatistics() {
+	private void logStatistics(StopWatch sw) {
 		long totalDocuments = deletedDocuments + insertedDocuments;
 		long totalTimeInSeconds = sw.stop().totalTime().seconds();
 		long totalDocumentsPerSecond = (totalTimeInSeconds == 0) ? totalDocuments : totalDocuments / totalTimeInSeconds;
 		logger.info("Indexed {} documents, {} insertions {}, updates, {} deletions, {} documents per second", totalDocuments, insertedDocuments, updatedDocuments, deletedDocuments, totalDocumentsPerSecond);
+	}
+
+	@Override
+	public void close() {
+		keepRunning = false;
 	}
 }

@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
+import net.swisstech.swissarmyknife.io.Closeables;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -35,16 +37,15 @@ public class Slurper implements Runnable, Closeable {
 
 	private static final ESLogger logger = ESLoggerFactory.getLogger(Slurper.class.getName());
 
+	private volatile boolean keepRunning = true;
+
 	private String currentTick;
-	private List<ReplogEntity> replogCursorResultSet;
 	private CloseableHttpClient arangoHttpClient;
 
-	private final ArangoDBRiver river;
 	private final ArangoDbConfig config;
 	private final BlockingQueue<Map<String, Object>> stream;
 
-	public Slurper(ArangoDBRiver river, ArangoDbConfig config, String currentTick, BlockingQueue<Map<String, Object>> stream) {
-		this.river = river;
+	public Slurper(ArangoDbConfig config, String currentTick, BlockingQueue<Map<String, Object>> stream) {
 		this.config = config;
 		this.currentTick = currentTick;
 		this.stream = stream;
@@ -54,9 +55,9 @@ public class Slurper implements Runnable, Closeable {
 	public void run() {
 		logger.info("=== river-arangodb slurper running ... ===");
 
-		while (river.isActive()) {
+		while (keepRunning) {
 			try {
-				replogCursorResultSet = processCollection(currentTick);
+				List<ReplogEntity> replogCursorResultSet = processCollection(currentTick);
 				ReplogEntity last_item = null;
 
 				for (ReplogEntity item : replogCursorResultSet) {
@@ -80,9 +81,6 @@ public class Slurper implements Runnable, Closeable {
 			}
 			catch (ArangoException e) {
 				logger.error("slurper: ArangoDB exception ", e);
-
-				// refactoring: call back into river. before the refactoring it just assigned 'active = false' which means everything will stop
-				river.close();
 			}
 			catch (InterruptedException e) {
 				if (logger.isDebugEnabled()) {
@@ -238,18 +236,7 @@ public class Slurper implements Runnable, Closeable {
 
 	@Override
 	public void close() {
-		try {
-			arangoHttpClient.close();
-		}
-		catch (IOException e) {
-			logger.error("River method close threw an IO exception", e);
-		}
-
-		try {
-			arangoHttpClient.close();
-		}
-		catch (Exception e) {
-			logger.error("Http client method close threw an exception", e);
-		}
+		keepRunning = false;
+		Closeables.close(arangoHttpClient);
 	}
 }

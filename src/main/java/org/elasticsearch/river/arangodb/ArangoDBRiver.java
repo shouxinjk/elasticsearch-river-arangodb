@@ -10,6 +10,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
 import net.swisstech.swissarmyknife.io.Closeables;
+import net.swisstech.swissarmyknife.lang.Threads;
 
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.get.GetResponse;
@@ -35,8 +36,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	private Thread slurperThread;
 	private Indexer indexer;
 	private Thread indexerThread;
-
-	private volatile boolean active = true;
 
 	private final BlockingQueue<Map<String, Object>> stream;
 
@@ -105,10 +104,12 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		String lastProcessedTick = fetchLastTick(config.getArangodbCollection());
 
-		slurper = new Slurper(this, config, lastProcessedTick, stream);
+		// TODO let guice construct the slurper
+		slurper = new Slurper(config, lastProcessedTick, stream);
 		slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(slurper);
 
-		indexer = new Indexer(this, config, client, riverIndexName, riverName, stream);
+		// TODO let guice construct the indexer
+		indexer = new Indexer(config, client, riverIndexName, riverName, stream);
 		indexerThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_indexer").newThread(indexer);
 
 		slurperThread.start();
@@ -119,23 +120,15 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 	@Override
 	public void close() {
-		if (active) {
-			logger.info("closing arangodb stream river");
+		logger.info("closing arangodb stream river");
 
-			active = false;
+		Closeables.close(slurper);
+		Closeables.close(indexer);
 
-			Closeables.close(slurper);
+		Threads.sleepFor(100);
 
-			// indexer uses ArangoDbRiver.isActive() and has no shutdown yet
-			// indexer.shutdown();
-
-			interruptAndJoin(slurperThread);
-			interruptAndJoin(indexerThread);
-		}
-	}
-
-	public boolean isActive() {
-		return active;
+		interruptAndJoin(slurperThread, 50);
+		interruptAndJoin(indexerThread, 50);
 	}
 
 	private String fetchLastTick(final String namespace) {
