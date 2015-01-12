@@ -19,14 +19,9 @@ import java.util.concurrent.BlockingQueue;
 import net.swisstech.swissarmyknife.io.Closeables;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
@@ -56,6 +51,7 @@ public class Slurper implements Runnable, Closeable {
 	private final Client client;
 	private final String riverIndexName;
 	private final RiverName riverName;
+	private CloseableHttpClient httpClient;
 	private final BlockingQueue<Map<String, Object>> stream;
 	private final String replogUriTemplate;
 
@@ -65,12 +61,14 @@ public class Slurper implements Runnable, Closeable {
 		Client client, //
 		@RiverIndexName final String riverIndexName, //
 		RiverName riverName, //
+		@Named("arangodb_river_httpclient") CloseableHttpClient httpClient, //
 		@Named("arangodb_river_eventstream") BlockingQueue<Map<String, Object>> stream //
 	) {
 		this.config = config;
 		this.client = client;
 		this.riverIndexName = riverIndexName;
 		this.riverName = riverName;
+		this.httpClient = httpClient;
 		this.stream = stream;
 
 		replogUriTemplate = new StringBuilder().append("http://") //
@@ -204,7 +202,6 @@ public class Slurper implements Runnable, Closeable {
 
 	private List<ReplogEntity> getNextArangoDBReplogs(String currentTick) throws ArangoException, JSONException, IOException {
 		List<ReplogEntity> replogs = new ArrayList<ReplogEntity>();
-		CloseableHttpClient httpClient = getArangoHttpClient();
 		String uri = replogUriTemplate + currentTick;
 
 		if (logger.isDebugEnabled()) {
@@ -246,19 +243,6 @@ public class Slurper implements Runnable, Closeable {
 		}
 
 		return replogs;
-	}
-
-	private CloseableHttpClient getArangoHttpClient() {
-		if (arangoHttpClient == null) {
-			CredentialsProvider credsProvider = new BasicCredentialsProvider();
-			AuthScope authScope = new AuthScope(config.getArangodbHost(), config.getArangodbPort());
-			UsernamePasswordCredentials unpwCreds = new UsernamePasswordCredentials(config.getArangodbCredentialsUsername(), config.getArangodbCredentialsPassword());
-			credsProvider.setCredentials(authScope, unpwCreds);
-			arangoHttpClient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
-			logger.info("created ArangoDB http client");
-		}
-
-		return arangoHttpClient;
 	}
 
 	private String fetchLastTick(final String namespace) {
