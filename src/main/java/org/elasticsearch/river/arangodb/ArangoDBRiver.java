@@ -21,7 +21,6 @@ import org.elasticsearch.script.ScriptService;
 
 public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
-
 	private final Client client;
 	private final ArangoDbConfig config;
 	private final Slurper slurper;
@@ -46,6 +45,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	) throws ArangoException {
 
 		super(riverName, settings);
+
 		this.client = client;
 		this.config = config;
 		this.slurper = slurper;
@@ -83,6 +83,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			}
 			else {
 				logger.error("failed to create index [{}], disabling river...", e, config.getIndexName());
+				// TODO: shouldn't we throw some exception to let ES know an error has happened?
 				return;
 			}
 		}
