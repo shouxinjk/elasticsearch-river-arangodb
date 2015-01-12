@@ -21,14 +21,19 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.StopWatch;
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.Singleton;
+import org.elasticsearch.common.inject.name.Named;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.river.RiverIndexName;
 import org.elasticsearch.river.RiverName;
 import org.elasticsearch.script.ExecutableScript;
 
+@Singleton
 public class Indexer implements Runnable, Closeable {
 
 	private final ESLogger logger = ESLoggerFactory.getLogger(this.getClass().getName());
@@ -45,7 +50,14 @@ public class Indexer implements Runnable, Closeable {
 	private final RiverName riverName;
 	private final BlockingQueue<Map<String, Object>> stream;
 
-	public Indexer(ArangoDbConfig config, Client client, String riverIndexName, RiverName riverName, BlockingQueue<Map<String, Object>> stream) {
+	@Inject
+	public Indexer( //
+	ArangoDbConfig config, //
+		Client client, //
+		@RiverIndexName final String riverIndexName, //
+		RiverName riverName, //
+		@Named("river_arangodb_eventstream") BlockingQueue<Map<String, Object>> stream //
+	) {
 		this.config = config;
 		this.client = client;
 		this.riverIndexName = riverIndexName;

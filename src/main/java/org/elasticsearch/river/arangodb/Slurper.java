@@ -3,10 +3,12 @@ package org.elasticsearch.river.arangodb;
 import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_CHECKMORE;
 import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_HEADER_LASTINCLUDED;
 import static org.elasticsearch.river.arangodb.ArangoConstants.HTTP_PROTOCOL;
+import static org.elasticsearch.river.arangodb.ArangoConstants.LAST_TICK_FIELD;
 import static org.elasticsearch.river.arangodb.ArangoConstants.NAME_FIELD;
 import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_ENTRY_UNDEFINED;
 import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_FIELD_KEY;
 import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_FIELD_TICK;
+import static org.elasticsearch.river.arangodb.ArangoConstants.RIVER_TYPE;
 import static org.elasticsearch.river.arangodb.ArangoConstants.STREAM_FIELD_OPERATION;
 
 import java.io.Closeable;
@@ -29,10 +31,18 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.Singleton;
+import org.elasticsearch.common.inject.name.Named;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.elasticsearch.river.RiverIndexName;
+import org.elasticsearch.river.RiverName;
 import org.json.JSONException;
 
+@Singleton
 public class Slurper implements Runnable, Closeable {
 
 	private static final ESLogger logger = ESLoggerFactory.getLogger(Slurper.class.getName());
@@ -43,17 +53,31 @@ public class Slurper implements Runnable, Closeable {
 	private CloseableHttpClient arangoHttpClient;
 
 	private final ArangoDbConfig config;
+	private final Client client;
+	private final String riverIndexName;
+	private final RiverName riverName;
 	private final BlockingQueue<Map<String, Object>> stream;
 
-	public Slurper(ArangoDbConfig config, String currentTick, BlockingQueue<Map<String, Object>> stream) {
+	@Inject
+	public Slurper( //
+	ArangoDbConfig config, //
+		Client client, //
+		@RiverIndexName final String riverIndexName, //
+		RiverName riverName, //
+		@Named("river_arangodb_eventstream") BlockingQueue<Map<String, Object>> stream //
+	) {
 		this.config = config;
-		this.currentTick = currentTick;
+		this.client = client;
+		this.riverIndexName = riverIndexName;
+		this.riverName = riverName;
 		this.stream = stream;
 	}
 
 	@Override
 	public void run() {
 		logger.info("=== river-arangodb slurper running ... ===");
+
+		currentTick = fetchLastTick(config.getArangodbCollection());
 
 		while (keepRunning) {
 			try {
@@ -232,6 +256,33 @@ public class Slurper implements Runnable, Closeable {
 		}
 
 		return arangoHttpClient;
+	}
+
+	private String fetchLastTick(final String namespace) {
+		logger.info("fetching last tick for collection {}", namespace);
+
+		GetResponse stateResponse = client.prepareGet(riverIndexName, riverName.getName(), namespace).execute().actionGet();
+
+		if (stateResponse.isExists()) {
+			Map<String, Object> indexState = (Map<String, Object>) stateResponse.getSourceAsMap().get(RIVER_TYPE);
+
+			if (indexState != null) {
+				try {
+					String lastTick = indexState.get(LAST_TICK_FIELD).toString();
+					logger.info("found last tick for collection {}: {}", namespace, lastTick);
+					return lastTick;
+
+				}
+				catch (Exception ex) {
+					logger.error("error fetching last tick for collection {}: {}", namespace, ex);
+				}
+			}
+			else {
+				logger.info("fetching last tick: indexState is null");
+			}
+		}
+
+		return null;
 	}
 
 	@Override
