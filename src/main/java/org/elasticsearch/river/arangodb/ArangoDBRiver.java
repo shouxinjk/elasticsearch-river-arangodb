@@ -76,13 +76,13 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		}
 		catch (Exception e) {
 			if (ExceptionsHelper.unwrapCause(e) instanceof IndexAlreadyExistsException) {
-				// ok
+				logger.info("index [{}] already exists", e, config.getIndexName());
 			}
 			else if (ExceptionsHelper.unwrapCause(e) instanceof ClusterBlockException) {
-				// ..
+				logger.info("cluster block exception for index [{}]", e, config.getIndexName());
 			}
 			else {
-				logger.warn("failed to create index [{}], disabling river...", e, config.getIndexName());
+				logger.error("failed to create index [{}], disabling river...", e, config.getIndexName());
 				return;
 			}
 		}
