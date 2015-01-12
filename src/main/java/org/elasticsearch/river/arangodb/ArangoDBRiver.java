@@ -89,7 +89,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 	@Inject
 	public ArangoDBRiver( //
-	final RiverName riverName, //
+		final RiverName riverName, //
 		final RiverSettings settings, //
 		@RiverIndexName final String riverIndexName, //
 		final Client client, //
@@ -220,14 +220,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	@Override
 	public void start() {
 		logger.info("using arangodb server(s): host [{}], port [{}]", arangoHost, arangoPort);
-
-		logger.info("starting arangodb stream. options: throttlesize [{}], db [{}], collection [{}], script [{}], indexing to [{}]/[{}]",
-				throttleSize,
-				arangoDb,
-				arangoCollection,
-				script,
-				indexName,
-				typeName);
+		logger.info("starting arangodb stream. options: throttlesize [{}], db [{}], collection [{}], script [{}], indexing to [{}]/[{}]", throttleSize, arangoDb, arangoCollection, script, indexName, typeName);
 
 		try {
 			client.admin().indices().prepareCreate(indexName).execute().actionGet();
