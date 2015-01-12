@@ -16,61 +16,67 @@ Configuration
 
 To create the river, run a curl statement from a shell:
 
-    curl -XPUT 'http://localhost:9200/_river/arangodb/_meta' -d '{
-        "type": "arangodb",
-        "arangodb": {
-            "db": "<DATABASE_NAME>",
-            "collection": "<COLLECTION>",
-        },
-        "index": {
-            "name": "<ES_INDEX_NAME>",
-            "type": "<ES_TYPE_NAME>"
-        }
-    }'
+```
+curl -XPUT 'http://localhost:9200/_river/arangodb/_meta' -d '{
+    "type": "arangodb",
+    "arangodb": {
+        "db": "<DATABASE_NAME>",
+        "collection": "<COLLECTION>",
+    },
+    "index": {
+        "name": "<ES_INDEX_NAME>",
+        "type": "<ES_TYPE_NAME>"
+    }
+}'
+```
 
 Example:
 
-    curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
-        "type": "arangodb",
-        "arangodb": {
-            "db": "test",
-            "collection": "car"
-        },
-        "index": {
-            "name": "cars",
-            "type": "car"
-        }
-    }'
+```
+curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
+    "type": "arangodb",
+    "arangodb": {
+        "db": "test",
+        "collection": "car"
+    },
+    "index": {
+        "name": "cars",
+        "type": "car"
+    }
+}'
+```
 
 Here is a more complex configuration with user credentials and a simple javascript example:
 
-    curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
-        "type": "arangodb",
-        "arangodb": {
-            "host": "carhost",
-            "port": carport,
-            "db": "test",
-            "collection": "car",
-            "credentials": {
-                "username": "riveruser",
-                "password": "rivauser"
-            },
-            "options": {
-                "drop_collection": false,
-                "exclude_fields": [
-                    "internal1",
-                    "internal2"
-                ]
-            }
-            "script" : "ctx.doc.title = ctx.doc.manufacturer + \" \" + ctx.doc.model;"
+```
+curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
+    "type": "arangodb",
+    "arangodb": {
+        "host": "carhost",
+        "port": carport,
+        "db": "test",
+        "collection": "car",
+        "credentials": {
+            "username": "riveruser",
+            "password": "rivauser"
         },
-        "index": {
-            "name": "cars",
-            "type": "car",
-            "bulk_size": 5000,
-            "bulk_timeout": "500ms"
+        "options": {
+            "drop_collection": false,
+            "exclude_fields": [
+                "internal1",
+                "internal2"
+            ]
         }
-    }'
+        "script" : "ctx.doc.title = ctx.doc.manufacturer + \" \" + ctx.doc.model;"
+    },
+    "index": {
+        "name": "cars",
+        "type": "car",
+        "bulk_size": 5000,
+        "bulk_timeout": "500ms"
+    }
+}'
+```
 
 Dependencies
 ------------
@@ -99,14 +105,18 @@ Prerequisites
 Before you can use the ArangoDB river, you must ask ArangoDB to switch into the replication logger mode.
 To do so, open an ArangoDB shell and run the following commands:
 
-    db._useDatabase("<DATABASE_NAME>");
-    require("org/arangodb/replication").logger.properties({autoStart: true, maxEvents: 1048576 });
-    require("org/arangodb/replication").logger.start();
+```
+db._useDatabase("<DATABASE_NAME>");
+require("org/arangodb/replication").logger.properties({autoStart: true, maxEvents: 1048576 });
+require("org/arangodb/replication").logger.start();
+```
 
 Don't forget to install the ElasticSearch language plugin if you intend to use a script within the river.
 Example (javascript):
 
-    sudo <ES_HOME>/bin/plugin -install elasticsearch/elasticsearch-lang-javascript/2.2.0
+```
+sudo <ES_HOME>/bin/plugin -install elasticsearch/elasticsearch-lang-javascript/2.2.0
+```
 
 (this is the current javascript language plugin version for ElasticSearch v1.2.1).
 Scripting is not limited to javascript. See the corresponding ElasticSearch documentation.
@@ -116,14 +126,18 @@ Hints
 
 To add a user for basic authentication, open an ArangoDB shell and run the following command:
 
-    require("org/arangodb/users").save("<username>", "<password>");
+```
+require("org/arangodb/users").save("<username>", "<password>");
+```
 
 This will create a user with the given user name and the given password.
 Currently, ArangoDB just provides user authentication, but no authorization on a collection or operation level.
 
 When starting the database, you can set the ArangoDB daemon parameter
 
-    --server.disable-authentication true
+```
+--server.disable-authentication true
+```
 
 if you like to run the database without any authentication mechanism.
 
@@ -133,7 +147,9 @@ Filtering
 Use scripting if you want to filter your data. Let's say your documents have a boolean field named "available".
 The following script will filter your data due to their availability flags:
 
-    "script" : "if ( ctx.doc.available == false ) { ctx.ignore = true };"
+```
+"script" : "if ( ctx.doc.available == false ) { ctx.ignore = true };"
+```
 
 This script checks the "available" flag, and it adds an "ignore" flag to the given document context when indicated.
 This "ignore" flag then makes the indexer skip the document when processing the streamed data.
