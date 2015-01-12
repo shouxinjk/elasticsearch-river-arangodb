@@ -139,22 +139,18 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	}
 
 	private String fetchLastTick(final String namespace) {
-		String lastTick = null;
-
 		logger.info("fetching last tick for collection {}", namespace);
 
-		GetResponse stateResponse = client
-				.prepareGet(riverIndexName, riverName.getName(), namespace)
-				.execute().actionGet();
+		GetResponse stateResponse = client.prepareGet(riverIndexName, riverName.getName(), namespace).execute().actionGet();
 
 		if (stateResponse.isExists()) {
 			Map<String, Object> indexState = (Map<String, Object>) stateResponse.getSourceAsMap().get(RIVER_TYPE);
 
 			if (indexState != null) {
 				try {
-					lastTick = indexState.get(LAST_TICK_FIELD).toString();
-
+					String lastTick = indexState.get(LAST_TICK_FIELD).toString();
 					logger.info("found last tick for collection {}: {}", namespace, lastTick);
+					return lastTick;
 
 				}
 				catch (Exception ex) {
@@ -166,6 +162,6 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			}
 		}
 
-		return lastTick;
+		return null;
 	}
 }
