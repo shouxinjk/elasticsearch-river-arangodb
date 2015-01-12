@@ -20,7 +20,7 @@ public class ArangoDBRiverModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	@Named("river_arangodb_eventstream")
+	@Named("arangodb_river_eventstream")
 	public BlockingQueue<Map<String, Object>> getStream(ArangoDbConfig config) {
 		int throttle = config.getIndexThrottleSize();
 		if (throttle == -1) {

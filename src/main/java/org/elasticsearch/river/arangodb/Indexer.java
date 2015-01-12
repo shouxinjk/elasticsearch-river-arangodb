@@ -56,7 +56,7 @@ public class Indexer implements Runnable, Closeable {
 		Client client, //
 		@RiverIndexName final String riverIndexName, //
 		RiverName riverName, //
-		@Named("river_arangodb_eventstream") BlockingQueue<Map<String, Object>> stream //
+		@Named("arangodb_river_eventstream") BlockingQueue<Map<String, Object>> stream //
 	) {
 		this.config = config;
 		this.client = client;
