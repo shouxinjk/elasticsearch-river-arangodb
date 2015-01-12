@@ -1,5 +1,6 @@
 package org.elasticsearch.river.arangodb;
 
+import static ch.bind.philib.lang.ThreadUtil.interruptAndJoin;
 import static java.util.Arrays.asList;
 import static org.elasticsearch.common.collect.Maps.newHashMap;
 import static org.elasticsearch.river.arangodb.ArangoConstants.BULK_SIZE_FIELD;
@@ -27,7 +28,6 @@ import static org.elasticsearch.river.arangodb.ArangoConstants.USER_FIELD;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -75,8 +75,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 	private final ExecutableScript script;
 
-	private List<Slurper> slurpers = new ArrayList<Slurper>();
-	private List<Thread> slurperThreads = new ArrayList<Thread>();
+	private Slurper slurper;
+	private Thread slurperThread;
 	private Indexer indexer;
 	private Thread indexerThread;
 
@@ -240,21 +240,16 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 		String lastProcessedTick = fetchLastTick(arangoCollection);
 
-		Slurper slurper = new Slurper(lastProcessedTick, excludeFields, arangoCollection, arangoDb, arangoAdminUser, arangoAdminPassword, arangoHost, arangoPort, stream, this);
-		Thread slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(slurper);
-
-		slurpers.add(slurper);
-		slurperThreads.add(slurperThread);
-
-		for (Thread thread : slurperThreads) {
-			logger.info("starting arangodb slurper [{}]", thread);
-			thread.start();
-		}
+		slurper = new Slurper(lastProcessedTick, excludeFields, arangoCollection, arangoDb, arangoAdminUser, arangoAdminPassword, arangoHost, arangoPort, stream, this);
+		slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(slurper);
 
 		indexer = new Indexer(this, client, typeName, indexName, arangoCollection, bulkTimeout, bulkSize, script, dropCollection, riverIndexName, riverName, stream);
 		indexerThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_indexer").newThread(indexer);
+
+		slurperThread.start();
 		indexerThread.start();
-		logger.info("starting arangodb indexer");
+
+		logger.info("started arangodb river");
 	}
 
 	@Override
@@ -264,17 +259,13 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 			active = false;
 
-			for (Slurper slurper : slurpers) {
-				slurper.shutdown();
-			}
+			slurper.shutdown();
 
-			for (Thread thread : slurperThreads) {
-				thread.interrupt();
-				logger.info("stopping arangodb slurper [{}]", thread);
-			}
+			// indexer uses ArangoDbRiver.isActive() and has no shutdown yet
+			// indexer.shutdown();
 
-			indexerThread.interrupt();
-			logger.info("stopping arangodb indexer");
+			interruptAndJoin(slurperThread);
+			interruptAndJoin(indexerThread);
 		}
 	}
 
