@@ -14,7 +14,7 @@ public class RiverSettingsWrapper {
 	private final RiverSettings rs;
 
 	public RiverSettingsWrapper(RiverSettings rs) {
-		this.rs =rs;
+		this.rs = rs;
 	}
 
 	public String getString(String path, String defaultValue) {
