@@ -4,12 +4,15 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.ThreadFactory;
 
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Provides;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.inject.name.Named;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.river.River;
+import org.elasticsearch.river.RiverSettings;
 
 public class ArangoDBRiverModule extends AbstractModule {
 
@@ -27,5 +30,19 @@ public class ArangoDBRiverModule extends AbstractModule {
 			return new LinkedTransferQueue<Map<String, Object>>();
 		}
 		return new ArrayBlockingQueue<Map<String, Object>>(throttle);
+	}
+
+	@Provides
+	@Singleton
+	@Named("arangodb_river_slurper_threadfactory")
+	public ThreadFactory getSlurperThreadFactory(RiverSettings settings) {
+		return EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper");
+	}
+
+	@Provides
+	@Singleton
+	@Named("arangodb_river_indexer_threadfactory")
+	public ThreadFactory getIndexerThreadFactory(RiverSettings settings) {
+		return EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_indexer");
 	}
 }

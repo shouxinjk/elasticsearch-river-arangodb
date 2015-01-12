@@ -1,6 +1,9 @@
 package org.elasticsearch.river.arangodb;
 
 import static ch.bind.philib.lang.ThreadUtil.interruptAndJoin;
+
+import java.util.concurrent.ThreadFactory;
+
 import net.swisstech.swissarmyknife.io.Closeables;
 import net.swisstech.swissarmyknife.lang.Threads;
 
@@ -8,7 +11,7 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.util.concurrent.EsExecutors;
+import org.elasticsearch.common.inject.name.Named;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.river.AbstractRiverComponent;
 import org.elasticsearch.river.River;
@@ -21,8 +24,10 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 	private final Client client;
 	private final ArangoDbConfig config;
-	private Slurper slurper;
-	private Indexer indexer;
+	private final Slurper slurper;
+	private final Indexer indexer;
+	private final ThreadFactory slurperThreadFactory;
+	private final ThreadFactory indexerThreadFactory;
 
 	private Thread slurperThread;
 	private Thread indexerThread;
@@ -35,7 +40,9 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		final ScriptService scriptService, //
 		final ArangoDbConfig config, //
 		final Slurper slurper, //
-		final Indexer indexer //
+		final Indexer indexer, //
+		@Named("arangodb_river_slurper_threadfactory") final ThreadFactory slurperThreadFactory, //
+		@Named("arangodb_river_indexer_threadfactory") final ThreadFactory indexerThreadFactory //
 	) throws ArangoException {
 
 		super(riverName, settings);
@@ -43,6 +50,8 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		this.config = config;
 		this.slurper = slurper;
 		this.indexer = indexer;
+		this.slurperThreadFactory = slurperThreadFactory;
+		this.indexerThreadFactory = indexerThreadFactory;
 
 		if (logger.isDebugEnabled()) {
 			logger.debug("Prefix: [{}] - name: [{}]", logger.getPrefix(), logger.getName());
@@ -78,13 +87,10 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 			}
 		}
 
-		// TODO let guice construct the slurper
-		slurperThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper").newThread(slurper);
-
-		// TODO let guice construct the indexer
-		indexerThread = EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_indexer").newThread(indexer);
-
+		slurperThread = slurperThreadFactory.newThread(slurper);
 		slurperThread.start();
+
+		indexerThread = indexerThreadFactory.newThread(indexer);
 		indexerThread.start();
 
 		logger.info("started arangodb river");
