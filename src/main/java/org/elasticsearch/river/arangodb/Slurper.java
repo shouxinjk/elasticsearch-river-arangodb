@@ -57,6 +57,7 @@ public class Slurper implements Runnable, Closeable {
 	private final String riverIndexName;
 	private final RiverName riverName;
 	private final BlockingQueue<Map<String, Object>> stream;
+	private final String replogUriTemplate;
 
 	@Inject
 	public Slurper( //
@@ -71,6 +72,17 @@ public class Slurper implements Runnable, Closeable {
 		this.riverIndexName = riverIndexName;
 		this.riverName = riverName;
 		this.stream = stream;
+
+		replogUriTemplate = new StringBuilder().append("http://") //
+			.append(config.getArangodbHost()) //
+			.append(":") //
+			.append(config.getArangodbPort()) //
+			.append("/_db/") //
+			.append(config.getArangodbDatabase()) //
+			.append("/_api/replication/dump?collection=") //
+			.append(config.getArangodbCollection()) //
+			.append("&from=") //
+			.toString();
 	}
 
 	@Override
@@ -192,18 +204,17 @@ public class Slurper implements Runnable, Closeable {
 
 	private List<ReplogEntity> getNextArangoDBReplogs(String currentTick) throws ArangoException, JSONException, IOException {
 		List<ReplogEntity> replogs = new ArrayList<ReplogEntity>();
-
 		CloseableHttpClient httpClient = getArangoHttpClient();
-		String uri = getReplogUri();
+		String uri = replogUriTemplate + currentTick;
 
 		if (logger.isDebugEnabled()) {
-			logger.debug("http uri = {}", uri + currentTick);
+			logger.debug("http uri = {}", uri);
 		}
 
 		boolean checkMore = true;
 
 		while (checkMore) {
-			HttpGet httpGet = new HttpGet(uri + currentTick);
+			HttpGet httpGet = new HttpGet(uri);
 
 			CloseableHttpResponse response = httpClient.execute(httpGet);
 			int status = response.getStatusLine().getStatusCode();
@@ -235,14 +246,6 @@ public class Slurper implements Runnable, Closeable {
 		}
 
 		return replogs;
-	}
-
-	private String getReplogUri() {
-		String uri = HTTP_PROTOCOL + "://";
-		uri += config.getArangodbHost() + ":" + config.getArangodbPort();
-		uri += "/_db/" + config.getArangodbDatabase() + "/_api/replication/dump?collection=";
-		uri += config.getArangodbCollection() + "&from=";
-		return uri;
 	}
 
 	private CloseableHttpClient getArangoHttpClient() {
