@@ -14,6 +14,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
+import net.swisstech.swissarmyknife.io.Closeables;
+
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
@@ -166,7 +168,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 
 			active = false;
 
-			slurper.shutdown();
+			Closeables.close(slurper);
 
 			// indexer uses ArangoDbRiver.isActive() and has no shutdown yet
 			// indexer.shutdown();

@@ -10,6 +10,7 @@ import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_FIELD_KEY;
 import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_FIELD_TICK;
 import static org.elasticsearch.river.arangodb.ArangoConstants.STREAM_FIELD_OPERATION;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +33,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.json.JSONException;
 
-public class Slurper implements Runnable {
+public class Slurper implements Runnable, Closeable {
 
 	private static final ESLogger logger = ESLoggerFactory.getLogger(Slurper.class.getName());
 
@@ -260,7 +261,8 @@ public class Slurper implements Runnable {
 		return arangoHttpClient;
 	}
 
-	public void shutdown() {
+	@Override
+	public void close() {
 		try {
 			arangoHttpClient.close();
 		}
