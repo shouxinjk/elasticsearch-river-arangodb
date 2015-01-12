@@ -3,16 +3,11 @@ package org.elasticsearch.river.arangodb;
 import static ch.bind.philib.lang.ThreadUtil.interruptAndJoin;
 import static java.util.Arrays.asList;
 import static org.elasticsearch.common.collect.Maps.newHashMap;
-import static org.elasticsearch.common.xcontent.support.XContentMapValues.extractValue;
-import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeBooleanValue;
-import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeIntegerValue;
-import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeStringValue;
 import static org.elasticsearch.river.arangodb.ArangoConstants.LAST_TICK_FIELD;
 import static org.elasticsearch.river.arangodb.ArangoConstants.RIVER_TYPE;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -90,41 +85,36 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		this.riverIndexName = riverIndexName;
 		this.client = client;
 
-		for (String field : basicExcludeFields) {
-			excludeFields.add(field);
-		}
+		RiverSettingsWrapper rsw = new RiverSettingsWrapper(settings);
 
-		Map<String, Object> localSettings = settings.settings();
-		arangoHost = nodeStringValue(extractValue("arangodb.host", localSettings), "localhost");
-		arangoPort = nodeIntegerValue(extractValue("arangodb.port", localSettings), 8529);
+		arangoHost = rsw.getString("arangodb.host", "localhost");
+		arangoPort = rsw.getInt("arangodb.port", 8529);
 
-		dropCollection = nodeBooleanValue(extractValue("arangodb.options.drop_collection", localSettings), true);
+		dropCollection = rsw.getBool("arangodb.options.drop_collection", true);
 
-		List<String> cfgExcludes = (List<String>) extractValue("arangodb.options.exclude_fields", localSettings);
-		if (cfgExcludes != null && !cfgExcludes.isEmpty()) {
-			excludeFields.addAll(cfgExcludes);
-		}
+		excludeFields.addAll(basicExcludeFields);
+		excludeFields.addAll(rsw.getList("arangodb.options.exclude_fields", new ArrayList<String>()));
 
-		arangoAdminUsername = nodeStringValue(extractValue("arangodb.credentials.username", localSettings), "");
-		arangoAdminPassword = nodeStringValue(extractValue("arangodb.credentials.password", localSettings), "");
+		arangoAdminUsername = rsw.getString("arangodb.credentials.username", "");
+		arangoAdminPassword = rsw.getString("arangodb.credentials.password", "");
 
-		arangoDb = nodeStringValue(extractValue("arangodb.db", localSettings), riverName.name());
-		arangoCollection = nodeStringValue(extractValue("arangodb.collection", localSettings), riverName.name());
+		arangoDb = rsw.getString("arangodb.db", riverName.name());
+		arangoCollection = rsw.getString("arangodb.collection", riverName.name());
 
-		String scriptString = nodeStringValue(extractValue("arangodb.script", localSettings), null);
-		String scriptLang = nodeStringValue(extractValue("arangodb.scriptType", localSettings), "js");
+		String scriptString = rsw.getString("arangodb.script", null);
+		String scriptLang = rsw.getString("arangodb.scriptType", "js");
 
 		ScriptType scriptType = ScriptType.INLINE;
 		script = scriptService.executable(scriptLang, scriptString, scriptType, newHashMap());
 
-		indexName = nodeStringValue(extractValue("index.name", localSettings), riverName.name());
-		typeName = nodeStringValue(extractValue("index.type", localSettings), riverName.name());
-		bulkSize = nodeIntegerValue(extractValue("index.bulk_size", localSettings), 100);
+		indexName = rsw.getString("index.name", riverName.name());
+		typeName = rsw.getString("index.type", riverName.name());
+		bulkSize = rsw.getInt("index.bulk_size", 100);
 
-		String bulkTimeoutString = nodeStringValue(extractValue("index.bulk_timeout", localSettings), "10ms");
+		String bulkTimeoutString = rsw.getString("index.bulk_timeout", "10ms");
 		bulkTimeout = TimeValue.parseTimeValue(bulkTimeoutString, null);
 
-		throttleSize = nodeIntegerValue(extractValue("index.throttle_size", localSettings), bulkSize * 5);
+		throttleSize = rsw.getInt("index.throttle_size", bulkSize * 5);
 
 		if (throttleSize == -1) {
 			stream = new LinkedTransferQueue<Map<String, Object>>();
