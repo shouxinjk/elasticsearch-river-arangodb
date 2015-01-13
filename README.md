@@ -95,12 +95,12 @@ Installation of the plugin is simple:
 # install from url
 /usr/share/elasticsearch/bin/plugin \
     --install arangodb \
-    --url http://www.arangodb.org/downloads/elasticsearch-river-arangodb-0.3.0.zip
+    --url https://github.com/triAGENS/elasticsearch-river-arangodb/releases/download/v0.4.0/elasticsearch-river-arangodb-0.4.0.zip
 
 # install from file
 /usr/share/elasticsearch/bin/plugin \
     --install arangodb \
-    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-0.3.0.zip
+    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-0.4.0.zip
 
 # remove the plugin (required for upgrades)
 /usr/share/elasticsearch/bin/plugin \
