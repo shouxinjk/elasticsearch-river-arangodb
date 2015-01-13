@@ -83,7 +83,11 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
 
 # Installation
 
-Download: [`elasticsearch-river-arangodb-0.3.0.zip`](http://www.arangodb.org/downloads/elasticsearch-river-arangodb-0.3.0.zip). The zip file contains all necessary dependencies and nothing else is needed to install it in elasticsearch.
+* TODO [`elasticsearch-river-arangodb-0.4.0.zip`](https://github.com/triAGENS/elasticsearch-river-arangodb/releases/download/v0.4.0/elasticsearch-river-arangodb-0.4.0.zip)
+* [`elasticsearch-river-arangodb-0.3.0.zip`](https://github.com/triAGENS/elasticsearch-river-arangodb/releases/download/v0.3.0/elasticsearch-river-arangodb-0.3.0.zip)
+* [`elasticsearch-river-arangodb-0.2.0.zip`](https://github.com/triAGENS/elasticsearch-river-arangodb/releases/download/v0.2.0/elasticsearch-river-arangodb-0.2.0.zip)
+
+The zip file contains all necessary dependencies and nothing else is needed to install it in elasticsearch.
 
 Installation of the plugin is simple:
 
@@ -161,7 +165,7 @@ This software is licensed under the Apache 2 license, see the supplied LICENSE f
 
 # Changelog
 
-## 0.4.0
+## 0.4.0 TODO
 - Works with ArangoDB versions of 2.2 and higher
 - Tested with ArangoDB 2.3.x / 2.4
 
