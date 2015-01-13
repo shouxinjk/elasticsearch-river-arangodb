@@ -6,7 +6,7 @@ This is an ElasticSearch plugin that will connect to your ArangoDB server, read 
 
 | ArangoDB River Plugin | ArangoDB       | ElasticSearch |
 |-----------------------|----------------|---------------|
-| 0.4.0                 | 2.2 and higher | 1.4.x         |
+| 0.4.0 (devel branch)  | 2.2 and higher | 1.4.x         |
 | 0.3.0                 | up to 2.2      | 1.4.x         |
 | 0.2.0                 | 1.4.0          | 1.0.0         |
 | 0.1.0-alpha           | 1.4.0          | 0.90.5        |
