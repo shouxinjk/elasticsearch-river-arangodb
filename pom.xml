@@ -42,7 +42,6 @@
 		<httpcomponents.version>4.3.6</httpcomponents.version>
 		<jackson.version>1.9.13</jackson.version>
 		<json.version>20090211</json.version>
-		<jsr166.version>1.7.0</jsr166.version>
 	</properties>
 
 	<dependencies>
@@ -66,11 +65,6 @@
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-mapper-asl</artifactId>
 			<version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.codehaus.jsr166-mirror</groupId>
-			<artifactId>jsr166</artifactId>
-			<version>${jsr166.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.swisstech</groupId>
@@ -104,8 +98,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.3.2</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 				</configuration>
 			</plugin>
 			<plugin>
