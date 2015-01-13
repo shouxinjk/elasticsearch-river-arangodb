@@ -4,12 +4,12 @@ This is an ElasticSearch plugin that will connect to your ArangoDB server, read 
 
 # Version Compatibility
 
-| ArangoDB River Plugin | ArangoDB       | ElasticSearch |
-|-----------------------|----------------|---------------|
-| 0.4.0 (devel branch)  | 2.2 and higher | 1.4.x         |
-| 0.3.0                 | up to 2.2      | 1.4.x         |
-| 0.2.0                 | 1.4.0          | 1.0.0         |
-| 0.1.0-alpha           | 1.4.0          | 0.90.5        |
+| ArangoDB River Plugin | ArangoDB                                                   | ElasticSearch |
+|-----------------------|------------------------------------------------------------|---------------|
+| 0.4.0 (devel branch)  | 2.2 and higher                                             | 1.4.x         |
+| 0.3.0                 | up to 2.2 (higher as long as replog is present and active) | 1.4.x         |
+| 0.2.0                 | 1.4.0                                                      | 1.0.0         |
+| 0.1.0-alpha           | 1.4.0                                                      | 0.90.5        |
 
 The ArangoDB river artefact is named `elasticsearch-river-arangodb-<version>.jar`.
 
@@ -167,10 +167,12 @@ This software is licensed under the Apache 2 license, see the supplied LICENSE f
 
 ## 0.4.0 TODO
 - Works with ArangoDB versions of 2.2 and higher
+- Uses the Write-Ahead-Log and is *not* compatible with versions below 2.2
 - Tested with ArangoDB 2.3.x / 2.4
 
 ## 0.3.0
 - Works with ArangoDB versions below 2.2
+- Works with ArangoDB versions of 2.2 and higher if the legacy Replication Logger is enabled
 - Update all dependencies to latest versions (ElasticSearch 1.4.x)
 - Complete Refactoring, Cleanups, Simplifications
 
