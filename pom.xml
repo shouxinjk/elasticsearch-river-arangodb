@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.triagens.elasticsearch</groupId>
 	<artifactId>elasticsearch-river-arangodb</artifactId>
-	<version>0.3.0</version>
+	<version>0.4.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<description>ArangoDB River for ElasticSearch</description>
 	<url>https://github.com/triAGENS/elasticsearch-river-arangodb</url>
