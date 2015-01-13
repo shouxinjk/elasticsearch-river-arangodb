@@ -1,18 +1,20 @@
-ArangoDB River Plugin for ElasticSearch
-=======================================
+# ArangoDB River Plugin for ElasticSearch
 
-| ArangoDB River Plugin | ArangoDB | ElasticSearch |
-|-----------------------|----------|---------------|
-| master                | 1.4.0    | 1.0.0         |
-| 0.2.0                 | 1.4.0    | 1.0.0         |
-| 0.1.0-alpha           | 1.4.0    | 0.90.5        |
+This is an ElasticSearch plugin that will connect to your ArangoDB server, read the replication log of a collection and update an ElasticSearch index with the data.
+
+# Version Compatibility
+
+| ArangoDB River Plugin | ArangoDB      | ElasticSearch |
+|-----------------------|---------------|---------------|
+| 0.3.0                 | 2.3.x / 2.4.x | 1.4.x         |
+| 0.2.0                 | 1.4.0         | 1.0.0         |
+| 0.1.0-alpha           | 1.4.0         | 0.90.5        |
 
 The ArangoDB river artefact is named `elasticsearch-river-arangodb-<version>.jar`.
 
-Current artefact version is: `elasticsearch-river-arangodb-0.2.0.jar`.
+Current artefact version is: `elasticsearch-river-arangodb-0.3.0.jar`.
 
-Configuration
--------------
+# Configuration
 
 To create the river, run a curl statement from a shell:
 
@@ -78,29 +80,29 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
 }'
 ```
 
-Dependencies
-------------
+# Installation
 
-The following files have to be present when running the ArangoDB river.
-Put them into the ArangoDB river plugin folder, together with the ArangoDB river artefact.
-The standard ArangoDB river plugin folder location is: `<ES_HOME>/plugins/river_arangodb` (create this folder if it doesn't exist).
-You can download a compressed file containing all of the required artefacts (see link below the artefacts lists).
+Download: [`elasticsearch-river-arangodb-0.3.0.zip`](http://www.arangodb.org/downloads/elasticsearch-river-arangodb-0.3.0.zip). The zip file contains all necessary dependencies and nothing else is needed to install it in elasticsearch.
 
-#### Artifacts list for 0.2.0
+Installation of the plugin is simple:
 
-- elasticsearch-river-arangodb-0.2.0.jar
-- commons-logging-1.1.3.jar
-- commons-codec-1.6.jar
-- httpclient-4.3.1.jar
-- httpcore-4.3.jar
-- jackson-core-asl-1.9.4.jar
-- jackson-mapper-asl-1.9.4.jar
-- json-20090211.jar
+```
+# install from url
+/usr/share/elasticsearch/bin/plugin \
+    --install arangodb \
+    --url http://www.arangodb.org/downloads/elasticsearch-river-arangodb-0.3.0.zip
 
-Download: [`elasticsearch-river-arangodb-0.2.0.zip`](http://www.arangodb.org/downloads/elasticsearch-river-arangodb-0.2.0.zip).
+# install from file
+/usr/share/elasticsearch/bin/plugin \
+    --install arangodb \
+    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-0.3.0.zip
 
-Prerequisites
--------------
+# remove the plugin (required for upgrades)
+/usr/share/elasticsearch/bin/plugin \
+    --remove arangodb \
+```
+
+# Prerequisites
 
 Before you can use the ArangoDB river, you must ask ArangoDB to switch into the replication logger mode.
 To do so, open an ArangoDB shell and run the following commands:
@@ -121,8 +123,7 @@ sudo <ES_HOME>/bin/plugin -install elasticsearch/elasticsearch-lang-javascript/2
 (this is the current javascript language plugin version for ElasticSearch v1.2.1).
 Scripting is not limited to javascript. See the corresponding ElasticSearch documentation.
 
-Hints
------
+# Hints
 
 To add a user for basic authentication, open an ArangoDB shell and run the following command:
 
@@ -141,8 +142,7 @@ When starting the database, you can set the ArangoDB daemon parameter
 
 if you like to run the database without any authentication mechanism.
 
-Filtering
-----------
+# Filtering
 
 Use scripting if you want to filter your data. Let's say your documents have a boolean field named "available".
 The following script will filter your data due to their availability flags:
@@ -154,18 +154,21 @@ The following script will filter your data due to their availability flags:
 This script checks the "available" flag, and it adds an "ignore" flag to the given document context when indicated.
 This "ignore" flag then makes the indexer skip the document when processing the streamed data.
 
-License
--------
+# License
 
 This software is licensed under the Apache 2 license, see the supplied LICENSE file.
 
-Changelog
----------
+# Changelog
 
-#### 0.2.0
+## 0.3.0
+- Update all dependencies to latest versions (ElasticSearch 1.4.x)
+- Complete Refactoring, Cleanups, Simplifications
+- Testing with ArangoDB 2.3.x / 2.4
+
+## 0.2.0
 - Minor changes for ElasticSearch v1.0.0.
 
-#### 0.1.0-alpha
+## 0.1.0-alpha
 - Initial alpha version.
 - Supports script filters.
 - Using Apache HTTP standard components.
