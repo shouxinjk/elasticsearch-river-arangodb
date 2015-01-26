@@ -1,0 +1,93 @@
+
+// build script
+buildscript {
+	repositories {
+		mavenLocal()
+		mavenCentral()
+		jcenter()
+	}
+}
+
+// plugins
+plugins {
+	id 'java'
+	id 'eclipse'
+	id 'maven-publish'
+	id 'project-report'
+	id 'net.swisstech.eclipseenhancer'   version '1.0.0'
+	id 'com.github.johnrengelman.shadow' version '1.2.1'
+}
+
+// re-use repositories from buildscript
+buildscript.repositories.each { repositories.add(it) }
+
+// java version
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+// basic infos
+description = 'ElasticSearch River plugin for ArangoDB'
+group       = 'com.github.triagens.elasticsearch'
+version     = '0.4.0-SNAPSHOT'
+
+// project dependencies
+ext.versions = [
+	  elasticsearch   : '1.4.2'
+	, httpcomponents  : '4.3.6'
+	, jackson         : '1.9.13'
+	, json            : '20140107'
+	, swissarmyknife  : '1.1.8'
+	, logback_classic : '1.1.2'
+	, testng          : '6.8.17'
+	, mockito         : '1.10.19'
+]
+
+dependencies {
+	// Core dependencies
+	compile "org.elasticsearch:elasticsearch:${versions.elasticsearch}"
+	compile "org.apache.httpcomponents:httpclient:${versions.httpcomponents}"
+	compile "org.json:json:${versions.json}"
+	compile "org.codehaus.jackson:jackson-mapper-asl:${versions.jackson}"
+	compile "net.swisstech:swissarmyknife:${versions.swissarmyknife}"
+
+	// Tests
+	testCompile "ch.qos.logback:logback-classic:${versions.logback_classic}"
+	testCompile "org.testng:testng:${versions.testng}"
+	testCompile "org.mockito:mockito-all:${versions.mockito}"
+}
+
+test {
+	useTestNG()
+}
+
+// task to generate wrapper
+task wrapper(type: Wrapper) {
+	gradleVersion = '2.2.1'
+}
+
+// config to build fat jar
+shadowJar {
+	mergeServiceFiles()
+	dependencies {
+		exclude(dependency("org.spatial4j:.*:.*"))
+		exclude(dependency("org.apache.lucene:.*:.*"))
+		exclude(dependency("org.elasticsearch:.*:.*"))
+	}
+}
+
+// source-code jar
+task sourceJar(type: Jar) {
+	from sourceSets.main.allSource
+}
+
+// configure maven jar publishing
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			artifact sourceJar {
+				classifier 'sources'
+			}
+		}
+	}
+}
