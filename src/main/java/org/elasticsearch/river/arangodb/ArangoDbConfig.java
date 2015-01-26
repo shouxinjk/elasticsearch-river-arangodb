@@ -38,7 +38,7 @@ public class ArangoDbConfig {
 
 		// arangodb
 		arangodbHost = rsw.getString("arangodb.host", "localhost");
-		arangodbPort = rsw.getInt("arangodb.port", 8529);
+		arangodbPort = rsw.getInteger("arangodb.port", 8529);
 		arangodbDatabase = rsw.getString("arangodb.db", riverName.name());
 		arangodbCollection = rsw.getString("arangodb.collection", riverName.name());
 
@@ -64,8 +64,8 @@ public class ArangoDbConfig {
 		// index
 		indexName = rsw.getString("index.name", riverName.name());
 		indexType = rsw.getString("index.type", riverName.name());
-		indexBulkSize = rsw.getInt("index.bulk_size", 100);
-		indexThrottleSize = rsw.getInt("index.throttle_size", indexBulkSize * 5);
+		indexBulkSize = rsw.getInteger("index.bulk_size", 100);
+		indexThrottleSize = rsw.getInteger("index.throttle_size", indexBulkSize * 5);
 
 		String bulkTimeoutString = rsw.getString("index.bulk_timeout", "10ms");
 		indexBulkTimeout = TimeValue.parseTimeValue(bulkTimeoutString, null);
