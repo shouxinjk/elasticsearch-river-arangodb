@@ -19,6 +19,7 @@ import java.util.concurrent.BlockingQueue;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.StopWatch;
 import org.elasticsearch.common.inject.Inject;
@@ -243,7 +244,19 @@ public class Indexer implements Runnable, Closeable {
 
 	private void updateLastTick(final String namespace, final String tick, final BulkRequestBuilder bulk) {
 		try {
-			bulk.add(indexRequest(riverIndexName).type(riverName.getName()).id(namespace).source(jsonBuilder().startObject().startObject(RIVER_TYPE).field(LAST_TICK_FIELD, tick).endObject().endObject()));
+			XContentBuilder json = jsonBuilder() //
+				.startObject() //
+				.startObject(RIVER_TYPE) //
+				.field(LAST_TICK_FIELD, tick) //
+				.endObject() //
+				.endObject();
+
+			IndexRequest req = indexRequest(riverIndexName) //
+				.type(riverName.getName()) //
+				.id(namespace) //
+				.source(json);
+
+			bulk.add(req);
 		}
 		catch (IOException e) {
 			logger.error("error updating last Tick for collection {}", namespace);
