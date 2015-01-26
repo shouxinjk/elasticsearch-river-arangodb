@@ -12,6 +12,7 @@ import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeSh
 import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeStringValue;
 import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeTimeValue;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -98,6 +99,10 @@ public class RiverSettingsWrapper {
 		return nodeTimeValue(extract(path), defaultValue);
 	}
 
+	public Map<String, Object> getMap(String path) {
+		return getMap(path, Collections.<String, Object> emptyMap());
+	}
+
 	public Map<String, Object> getMap(String path, Map<String, Object> defaultValue) {
 		Object value = extract(path);
 		if (value == null) {
@@ -106,12 +111,16 @@ public class RiverSettingsWrapper {
 		return nodeMapValue(value, path);
 	}
 
-	public <T> List<T> getList(String path, List<T> defaultValue) {
+	public List<String> getList(String path) {
+		return getList(path, Collections.<String> emptyList());
+	}
+
+	public List<String> getList(String path, List<String> defaultValue) {
 		Object value = extract(path);
 		if (value == null) {
 			return defaultValue;
 		}
-		return (List<T>) value;
+		return (List<String>) value;
 	}
 
 	public Object extract(String path) {

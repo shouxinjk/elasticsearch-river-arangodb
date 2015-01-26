@@ -1,10 +1,9 @@
 package org.elasticsearch.river.arangodb;
 
 import static java.util.Collections.unmodifiableSet;
+import static net.swisstech.swissarmyknife.util.Sets.newHashSet;
 import static org.elasticsearch.common.collect.Maps.newHashMap;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.elasticsearch.common.inject.Inject;
@@ -50,11 +49,8 @@ public class ArangoDbConfig {
 		// arangodb.options
 		arangodbOptionsDropcollection = rsw.getBool("arangodb.options.drop_collection", true);
 
-		Set<String> excludes = new HashSet<String>();
-		excludes.add("_id");
-		excludes.add("_key");
-		excludes.add("_rev");
-		excludes.addAll(rsw.getList("arangodb.options.exclude_fields", new ArrayList<String>()));
+		Set<String> excludes = newHashSet("_id", "_key", "_rev");
+		excludes.addAll(rsw.getList("arangodb.options.exclude_fields"));
 		arangodbOptionsExcludeFields = unmodifiableSet(excludes);
 
 		// arangodb.credentials
