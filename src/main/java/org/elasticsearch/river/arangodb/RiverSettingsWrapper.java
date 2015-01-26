@@ -15,13 +15,17 @@ import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeTi
 import java.util.List;
 import java.util.Map;
 
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.river.RiverSettings;
 
+@Singleton
 public class RiverSettingsWrapper {
 
 	private final RiverSettings rs;
 
+	@Inject
 	public RiverSettingsWrapper(RiverSettings rs) {
 		this.rs = rs;
 	}
