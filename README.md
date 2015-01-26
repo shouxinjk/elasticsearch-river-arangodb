@@ -2,6 +2,13 @@
 
 This is an ElasticSearch plugin that will connect to your ArangoDB server, read the replication log of a collection and update an ElasticSearch index with the data.
 
+# Build Status
+
+| Branch | Status |
+|--------|--------|
+| Master | [![master](https://travis-ci.org/triAGENS/elasticsearch-river-arangodb.svg?branch=master)](https://travis-ci.org/triAGENS/elasticsearch-river-arangodb) |
+| Devel  | [![devel](https://travis-ci.org/triAGENS/elasticsearch-river-arangodb.svg?branch=devel)](https://travis-ci.org/triAGENS/elasticsearch-river-arangodb) |
+
 # Version Compatibility
 
 | ArangoDB River Plugin | ArangoDB                                                   | ElasticSearch |
