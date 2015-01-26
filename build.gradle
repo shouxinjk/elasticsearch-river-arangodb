@@ -32,14 +32,15 @@ version     = '0.4.0-SNAPSHOT'
 
 // project dependencies
 ext.versions = [
-	  elasticsearch   : '1.4.2'
-	, httpcomponents  : '4.3.6'
-	, jackson         : '1.9.13'
-	, json            : '20140107'
-	, swissarmyknife  : '1.1.8'
-	, logback_classic : '1.1.2'
-	, testng          : '6.8.17'
-	, mockito         : '1.10.19'
+	  elasticsearch      : '1.4.2'
+	, arangodb_wal_client: '1.0.0'
+	, httpcomponents     : '4.3.6'
+	, jackson            : '1.9.13'
+	, json               : '20140107'
+	, swissarmyknife     : '1.1.8'
+	, logback_classic    : '1.1.2'
+	, testng             : '6.8.17'
+	, mockito            : '1.10.19'
 ]
 
 dependencies {
@@ -48,6 +49,8 @@ dependencies {
 	compile "org.apache.httpcomponents:httpclient:${versions.httpcomponents}"
 	compile "org.json:json:${versions.json}"
 	compile "org.codehaus.jackson:jackson-mapper-asl:${versions.jackson}"
+
+	compile "net.swisstech:arangodb-wal-client:${versions.arangodb_wal_client}"
 	compile "net.swisstech:swissarmyknife:${versions.swissarmyknife}"
 
 	// Tests
