@@ -50,7 +50,10 @@ dependencies {
 	compile "org.json:json:${versions.json}"
 	compile "org.codehaus.jackson:jackson-mapper-asl:${versions.jackson}"
 
+	// see: https://github.com/stackmagic/arangodb-wal-client
 	compile "net.swisstech:arangodb-wal-client:${versions.arangodb_wal_client}"
+
+	// see: https://github.com/stackmagic/swissarmyknife
 	compile "net.swisstech:swissarmyknife:${versions.swissarmyknife}"
 
 	// Tests
