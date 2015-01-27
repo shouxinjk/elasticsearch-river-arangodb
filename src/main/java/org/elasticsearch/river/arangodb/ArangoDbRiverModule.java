@@ -1,5 +1,7 @@
 package org.elasticsearch.river.arangodb;
 
+import static net.swisstech.swissarmyknife.lang.Strings.isBlank;
+
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -12,6 +14,8 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import net.swisstech.arangodb.WalClient;
+
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Provides;
 import org.elasticsearch.common.inject.Singleton;
@@ -26,6 +30,22 @@ public class ArangoDbRiverModule extends AbstractModule {
 	@Override
 	protected void configure() {
 		bind(River.class).to(ArangoDbRiver.class).asEagerSingleton();
+	}
+
+	@Provides
+	@Singleton
+	public WalClient provideWalClient(ArangoDbConfig config) {
+		String host = config.getArangodbHost();
+		int port = config.getArangodbPort();
+		String baseUrl = String.format("http://%s:%d", host, port);
+		String user = config.getArangodbCredentialsUsername();
+		String pass = config.getArangodbCredentialsPassword();
+		if (isBlank(user) && isBlank(pass)) {
+			return new WalClient(baseUrl);
+		}
+		else {
+			return new WalClient(baseUrl, user, pass);
+		}
 	}
 
 	@Provides
