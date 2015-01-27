@@ -2,10 +2,6 @@ package org.elasticsearch.river.arangodb;
 
 import static net.swisstech.swissarmyknife.lang.Strings.isBlank;
 
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.ThreadFactory;
 
 import net.swisstech.arangodb.WalClient;
@@ -40,17 +36,6 @@ public class ArangoDbRiverModule extends AbstractModule {
 		else {
 			return new WalClient(baseUrl, user, pass);
 		}
-	}
-
-	@Provides
-	@Singleton
-	@Named("arangodb_river_eventstream")
-	public BlockingQueue<Map<String, Object>> getStream(ArangoDbConfig config) {
-		int throttle = config.getIndexThrottleSize();
-		if (throttle == -1) {
-			return new LinkedTransferQueue<Map<String, Object>>();
-		}
-		return new ArrayBlockingQueue<Map<String, Object>>(throttle);
 	}
 
 	@Provides

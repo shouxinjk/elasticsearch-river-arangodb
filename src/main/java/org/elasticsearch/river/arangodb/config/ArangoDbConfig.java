@@ -4,19 +4,28 @@ import static java.util.Collections.unmodifiableSet;
 import static net.swisstech.swissarmyknife.util.Sets.newHashSet;
 import static org.elasticsearch.common.collect.Maps.newHashMap;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedTransferQueue;
 
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.river.RiverIndexName;
 import org.elasticsearch.river.RiverName;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
+/** config object and holder of shared object */
 @Singleton
 public class ArangoDbConfig {
 
+	private final String riverIndexName;
+	private final String riverName;
+	private final BlockingQueue<Map<String, Object>> eventStream;
 	private final String arangodbHost;
 	private final int arangodbPort;
 	private final String arangodbDatabase;
@@ -33,18 +42,25 @@ public class ArangoDbConfig {
 	private final TimeValue indexBulkTimeout;
 
 	@Inject
-	public ArangoDbConfig(RiverSettingsWrapper rsw, ScriptService scriptService, RiverName riverName) {
+	public ArangoDbConfig( //
+	RiverSettingsWrapper rsw, //
+		@RiverIndexName final String riverIndexName, //
+		RiverName pRiverName, //
+		ScriptService scriptService //
+	) {
+
+		this.riverIndexName = riverIndexName;
+		riverName = pRiverName.name();
 
 		// arangodb
 		arangodbHost = rsw.getString("arangodb.host", "localhost");
 		arangodbPort = rsw.getInteger("arangodb.port", 8529);
-		arangodbDatabase = rsw.getString("arangodb.db", riverName.name());
-		arangodbCollection = rsw.getString("arangodb.collection", riverName.name());
+		arangodbDatabase = rsw.getString("arangodb.db", riverName);
+		arangodbCollection = rsw.getString("arangodb.collection", riverName);
 
 		String scriptString = rsw.getString("arangodb.script", null);
 		String scriptLang = rsw.getString("arangodb.scriptType", "js");
-		ScriptType scriptType = ScriptType.INLINE;
-		arangodbScript = scriptService.executable(scriptLang, scriptString, scriptType, newHashMap());
+		arangodbScript = scriptService.executable(scriptLang, scriptString, ScriptType.INLINE, newHashMap());
 
 		// arangodb.options
 		arangodbOptionsDropcollection = rsw.getBool("arangodb.options.drop_collection", true);
@@ -58,13 +74,34 @@ public class ArangoDbConfig {
 		arangodbCredentialsPassword = rsw.getString("arangodb.credentials.password", "");
 
 		// index
-		indexName = rsw.getString("index.name", riverName.name());
-		indexType = rsw.getString("index.type", riverName.name());
+		indexName = rsw.getString("index.name", riverName);
+		indexType = rsw.getString("index.type", riverName);
 		indexBulkSize = rsw.getInteger("index.bulk_size", 100);
 		indexThrottleSize = rsw.getInteger("index.throttle_size", indexBulkSize * 5);
 
 		String bulkTimeoutString = rsw.getString("index.bulk_timeout", "10ms");
 		indexBulkTimeout = TimeValue.parseTimeValue(bulkTimeoutString, null);
+
+		// event stream from producer to consumer
+		if (indexThrottleSize == -1) {
+			eventStream = new LinkedTransferQueue<Map<String, Object>>();
+		}
+		else {
+			eventStream = new ArrayBlockingQueue<Map<String, Object>>(indexThrottleSize);
+		}
+
+	}
+
+	public String getRiverIndexName() {
+		return riverIndexName;
+	}
+
+	public String getRiverName() {
+		return riverName;
+	}
+
+	public BlockingQueue<Map<String, Object>> getEventStream() {
+		return eventStream;
 	}
 
 	public String getArangodbHost() {
