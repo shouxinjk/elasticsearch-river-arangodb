@@ -1,4 +1,4 @@
-package org.elasticsearch.river.arangodb;
+package org.elasticsearch.river.arangodb.config;
 
 import static java.util.Collections.unmodifiableSet;
 import static net.swisstech.swissarmyknife.util.Sets.newHashSet;

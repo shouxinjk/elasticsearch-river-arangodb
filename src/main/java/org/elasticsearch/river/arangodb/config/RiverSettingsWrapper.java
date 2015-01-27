@@ -1,4 +1,4 @@
-package org.elasticsearch.river.arangodb;
+package org.elasticsearch.river.arangodb.config;
 
 import static org.elasticsearch.common.xcontent.support.XContentMapValues.extractValue;
 import static org.elasticsearch.common.xcontent.support.XContentMapValues.nodeBooleanValue;

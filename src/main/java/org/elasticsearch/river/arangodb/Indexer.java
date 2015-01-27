@@ -32,6 +32,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.river.RiverIndexName;
 import org.elasticsearch.river.RiverName;
+import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 import org.elasticsearch.script.ExecutableScript;
 
 @Singleton

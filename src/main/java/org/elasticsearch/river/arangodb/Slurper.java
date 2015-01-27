@@ -32,6 +32,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.river.RiverIndexName;
 import org.elasticsearch.river.RiverName;
+import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 import org.json.JSONException;
 
 @Singleton

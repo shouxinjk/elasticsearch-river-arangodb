@@ -19,6 +19,7 @@ import org.elasticsearch.common.inject.name.Named;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.river.River;
 import org.elasticsearch.river.RiverSettings;
+import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 
 public class ArangoDbRiverModule extends AbstractModule {
 
