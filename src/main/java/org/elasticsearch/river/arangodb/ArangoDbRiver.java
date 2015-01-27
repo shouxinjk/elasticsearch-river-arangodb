@@ -19,7 +19,7 @@ import org.elasticsearch.river.RiverName;
 import org.elasticsearch.river.RiverSettings;
 import org.elasticsearch.script.ScriptService;
 
-public class ArangoDBRiver extends AbstractRiverComponent implements River {
+public class ArangoDbRiver extends AbstractRiverComponent implements River {
 
 	private final Client client;
 	private final ArangoDbConfig config;
@@ -32,7 +32,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 	private Thread indexerThread;
 
 	@Inject
-	public ArangoDBRiver( //
+	public ArangoDbRiver( //
 	final RiverName riverName, //
 		final RiverSettings settings, //
 		final Client client, //
@@ -42,7 +42,7 @@ public class ArangoDBRiver extends AbstractRiverComponent implements River {
 		final Indexer indexer, //
 		@Named("arangodb_river_slurper_threadfactory") final ThreadFactory slurperThreadFactory, //
 		@Named("arangodb_river_indexer_threadfactory") final ThreadFactory indexerThreadFactory //
-	) throws ArangoException {
+	) throws ArangoDbException {
 
 		super(riverName, settings);
 

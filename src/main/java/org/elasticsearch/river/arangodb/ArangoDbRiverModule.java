@@ -20,11 +20,11 @@ import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.river.River;
 import org.elasticsearch.river.RiverSettings;
 
-public class ArangoDBRiverModule extends AbstractModule {
+public class ArangoDbRiverModule extends AbstractModule {
 
 	@Override
 	protected void configure() {
-		bind(River.class).to(ArangoDBRiver.class).asEagerSingleton();
+		bind(River.class).to(ArangoDbRiver.class).asEagerSingleton();
 	}
 
 	@Provides

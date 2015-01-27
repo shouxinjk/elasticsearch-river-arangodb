@@ -109,7 +109,7 @@ public class Slurper implements Runnable, Closeable {
 
 				Thread.sleep(2000);
 			}
-			catch (ArangoException e) {
+			catch (ArangoDbException e) {
 				logger.error("slurper: ArangoDB exception ", e);
 			}
 			catch (InterruptedException e) {
@@ -126,7 +126,7 @@ public class Slurper implements Runnable, Closeable {
 		try {
 			res = getNextArangoDBReplogs(currentTick);
 		}
-		catch (ArangoException e) {
+		catch (ArangoDbException e) {
 			logger.error("ArangoDB getNextArangoDBReplogs threw an Arango exception", e);
 		}
 		catch (JSONException e) {
@@ -139,7 +139,7 @@ public class Slurper implements Runnable, Closeable {
 		return res;
 	}
 
-	private void processReplogEntry(final ReplogEntity entry) throws ArangoException, InterruptedException {
+	private void processReplogEntry(final ReplogEntity entry) throws ArangoDbException, InterruptedException {
 		String documentHandle = entry.getKey();
 		OpType operation = entry.getOperation();
 		String replogTick = entry.getTick();
@@ -187,7 +187,7 @@ public class Slurper implements Runnable, Closeable {
 		stream.put(data);
 	}
 
-	private List<ReplogEntity> getNextArangoDBReplogs(String currentTick) throws ArangoException, JSONException, IOException {
+	private List<ReplogEntity> getNextArangoDBReplogs(String currentTick) throws ArangoDbException, JSONException, IOException {
 		List<ReplogEntity> replogs = new ArrayList<ReplogEntity>();
 		String uri = replogUriTemplate + currentTick;
 
@@ -223,7 +223,7 @@ public class Slurper implements Runnable, Closeable {
 				checkMore = false;
 			}
 			else {
-				throw new ArangoException("unexpected http response status: " + status);
+				throw new ArangoDbException("unexpected http response status: " + status);
 			}
 		}
 

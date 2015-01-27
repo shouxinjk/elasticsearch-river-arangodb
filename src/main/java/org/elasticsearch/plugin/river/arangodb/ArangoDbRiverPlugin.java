@@ -21,12 +21,12 @@ package org.elasticsearch.plugin.river.arangodb;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.plugins.AbstractPlugin;
 import org.elasticsearch.river.RiversModule;
-import org.elasticsearch.river.arangodb.ArangoDBRiverModule;
+import org.elasticsearch.river.arangodb.ArangoDbRiverModule;
 
-public class ArangoDBRiverPlugin extends AbstractPlugin {
+public class ArangoDbRiverPlugin extends AbstractPlugin {
 
 	@Inject
-	public ArangoDBRiverPlugin() {}
+	public ArangoDbRiverPlugin() {}
 
 	@Override
 	public String name() {
@@ -39,6 +39,6 @@ public class ArangoDBRiverPlugin extends AbstractPlugin {
 	}
 
 	public void onModule(RiversModule module) {
-		module.registerRiver("arangodb", ArangoDBRiverModule.class);
+		module.registerRiver("arangodb", ArangoDbRiverModule.class);
 	}
 }
