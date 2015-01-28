@@ -130,7 +130,7 @@ public class ArangoDbConfig {
 		return arangodbOptionsFullSync;
 	}
 
-	public boolean isArangodbOptionsDropcollection() {
+	public boolean getArangodbOptionsDropcollection() {
 		return arangodbOptionsDropcollection;
 	}
 
