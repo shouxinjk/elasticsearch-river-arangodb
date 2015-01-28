@@ -27,7 +27,10 @@ public class ArangoDbRiverModule extends AbstractModule {
 	public WalClient provideWalClient(ArangoDbConfig config) {
 		String host = config.getArangodbHost();
 		int port = config.getArangodbPort();
-		String baseUrl = String.format("http://%s:%d", host, port);
+		String db = config.getArangodbDatabase();
+
+		String baseUrl = String.format("http://%s:%d/_db/%s", host, port, db);
+
 		String user = config.getArangodbCredentialsUsername();
 		String pass = config.getArangodbCredentialsPassword();
 		if (isBlank(user) && isBlank(pass)) {
