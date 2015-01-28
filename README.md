@@ -64,6 +64,7 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
             "password": "rivauser"
         },
         "options": {
+            "full_sync": true,
             "drop_collection": false,
             "exclude_fields": [
                 "internal1",

@@ -31,6 +31,7 @@ public class ArangoDbConfig {
 	private final String arangodbDatabase;
 	private final String arangodbCollection;
 	private final ExecutableScript arangodbScript;
+	private final boolean arangodbOptionsFullSync;
 	private final boolean arangodbOptionsDropcollection;
 	private final Set<String> arangodbOptionsExcludeFields;
 	private final String arangodbCredentialsUsername;
@@ -63,6 +64,7 @@ public class ArangoDbConfig {
 		arangodbScript = scriptService.executable(scriptLang, scriptString, ScriptType.INLINE, newHashMap());
 
 		// arangodb.options
+		arangodbOptionsFullSync = rsw.getBool("arangodb.options.full_sync", false);
 		arangodbOptionsDropcollection = rsw.getBool("arangodb.options.drop_collection", true);
 
 		Set<String> excludes = newHashSet("_id", "_key", "_rev");
@@ -122,6 +124,10 @@ public class ArangoDbConfig {
 
 	public ExecutableScript getArangodbScript() {
 		return arangodbScript;
+	}
+
+	public boolean getArangodbOptionsFullSync() {
+		return arangodbOptionsFullSync;
 	}
 
 	public boolean isArangodbOptionsDropcollection() {
