@@ -63,14 +63,14 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
             "username": "riveruser",
             "password": "rivauser"
         },
-        "options": {
-            "full_sync": true,
-            "drop_collection": false,
-            "exclude_fields": [
-                "internal1",
-                "internal2"
-            ]
-        },
+        "full_sync": true,
+        "min_wait": "100ms",
+        "max_wait": "10s",
+        "drop_collection": false,
+        "exclude_fields": [
+            "internal1",
+            "internal2"
+        ],
         "script" : "ctx.doc.title = ctx.doc.manufacturer + \" \" + ctx.doc.model;"
     },
     "index": {

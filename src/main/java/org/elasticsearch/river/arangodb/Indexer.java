@@ -211,7 +211,7 @@ public class Indexer implements Runnable, Closeable {
 				logger.debug("Delete operation - id: {}, data [{}]", objectId, data);
 
 				if (REPLOG_ENTRY_UNDEFINED.equals(objectId) && data.get(NAME_FIELD).equals(config.getArangodbCollection())) {
-					if (config.isArangodbOptionsDropcollection()) {
+					if (config.getArangodbDropcollection()) {
 						logger.info("Drop collection request [{}], [{}]", index, type);
 
 						bulk.request().requests().clear();

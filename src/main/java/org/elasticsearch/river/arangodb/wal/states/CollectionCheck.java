@@ -1,5 +1,7 @@
 package org.elasticsearch.river.arangodb.wal.states;
 
+import java.io.IOException;
+
 import net.swisstech.arangodb.WalClient;
 import net.swisstech.arangodb.model.ArangoDbCollection;
 import net.swisstech.arangodb.model.CollectionParameters;
@@ -41,7 +43,7 @@ public class CollectionCheck extends BaseState {
 
 		StateMachine sm = getStateMachine();
 		if (found) {
-			sleep.resetErrorCounter();
+			sleep.resetErrorCount();
 
 			// remove self
 			sm.pop();
@@ -50,14 +52,21 @@ public class CollectionCheck extends BaseState {
 			sm.push(readWal);
 		}
 		else {
-			sleep.increaseErrorCounter();
+			sleep.increaseErrorCount();
 			sm.push(sleep);
 		}
 	}
 
 	private boolean collectionFound() {
+		Inventory inventory = null;
+		try {
+			inventory = client.inventory();
+		}
+		catch (IOException e) {
+			return false;
+		}
+
 		String name = getConfig().getArangodbCollection();
-		Inventory inventory = client.inventory();
 		for (ArangoDbCollection collection : inventory.getCollections()) {
 			CollectionParameters params = collection.getParameters();
 			String collName = params.getName();

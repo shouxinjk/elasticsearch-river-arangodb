@@ -1,12 +1,17 @@
 package org.elasticsearch.river.arangodb.wal.states;
 
+import java.io.IOException;
+
 import net.swisstech.arangodb.WalClient;
 import net.swisstech.arangodb.model.wal.WalDump;
 
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 import org.elasticsearch.river.arangodb.wal.BaseState;
 import org.elasticsearch.river.arangodb.wal.StateMachine;
 
+@Singleton
 public class ReadWal extends BaseState {
 
 	private final WalClient client;
@@ -14,6 +19,9 @@ public class ReadWal extends BaseState {
 	private final Sleep sleep;
 	private final CollectionMissing collectionMissing;
 
+	private long lastTick = 0;
+
+	@Inject
 	public ReadWal(StateMachine stateMachine, ArangoDbConfig config, WalClient client, Enqueue enqueue, Sleep sleep, CollectionMissing collectionMissing) {
 		super(stateMachine, config);
 		this.client = client;
@@ -30,34 +38,49 @@ public class ReadWal extends BaseState {
 		 */
 
 		String collName = getConfig().getArangodbCollection();
-		long lastTick = Globals.getLastTick();
-		WalDump dump = client.dump(collName, lastTick);
-		int code = dump.getResponseCode();
+		WalDump dump = null;
+		int code = 0;
+		try {
+			dump = client.dump(collName, lastTick);
+			code = dump.getResponseCode();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		/*
 		 * next state
 		 */
 
 		StateMachine sm = getStateMachine();
-		if (200 == code) {
-			Globals.setLastTick(dump.getHeaders().getReplicationLastincluded());
-			sleep.resetErrorCounter();
+		if (dump == null) {
+			// this is bad! maybe just a temporary network error?
+			sleep.increaseErrorCount();
+			sm.push(sleep);
+		}
+		else if (200 == code) {
+			lastTick = dump.getHeaders().getReplicationLastincluded();
+			sleep.resetErrorCount();
 			enqueue.setData(dump);
 			sm.pop();
 			sm.push(enqueue);
 		}
 		else if (204 == code) {
 			if (dump.getHeaders().getReplicationCheckmore()) {
-				// no op, go straight back to Dump
+				// no op, go straight back to reading the WAL
 			}
 			else {
-				sleep.increaseErrorCounter();
-				sm.push(sleep)
+				sleep.increaseErrorCount();
+				sm.push(sleep);
 			}
 		}
 		else if (404 == code) {
 			sm.pop();
 			sm.push(collectionMissing);
 		}
+	}
+
+	public void setLastTick(long lastTick) {
+		this.lastTick = lastTick;
 	}
 }

@@ -1,8 +1,13 @@
 package org.elasticsearch.river.arangodb.config;
 
 import static java.util.Collections.unmodifiableSet;
+import static net.swisstech.swissarmyknife.lang.Integers.positive;
+import static net.swisstech.swissarmyknife.lang.Longs.positive;
+import static net.swisstech.swissarmyknife.lang.Strings.notBlank;
+import static net.swisstech.swissarmyknife.net.TCP.validPortNumber;
 import static net.swisstech.swissarmyknife.util.Sets.newHashSet;
 import static org.elasticsearch.common.collect.Maps.newHashMap;
+import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
 
 import java.util.Map;
 import java.util.Set;
@@ -12,7 +17,6 @@ import java.util.concurrent.LinkedTransferQueue;
 
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.river.RiverIndexName;
 import org.elasticsearch.river.RiverName;
 import org.elasticsearch.script.ExecutableScript;
@@ -31,8 +35,10 @@ public class ArangoDbConfig {
 	private final String arangodbDatabase;
 	private final String arangodbCollection;
 	private final ExecutableScript arangodbScript;
-	private final boolean arangodbOptionsFullSync;
-	private final boolean arangodbOptionsDropcollection;
+	private final boolean arangodbFullSync;
+	private final boolean arangodbDropcollection;
+	private final long arangodbMinWait;
+	private final long arangodbMaxWait;
 	private final Set<String> arangodbOptionsExcludeFields;
 	private final String arangodbCredentialsUsername;
 	private final String arangodbCredentialsPassword;
@@ -40,7 +46,7 @@ public class ArangoDbConfig {
 	private final String indexType;
 	private final int indexBulkSize;
 	private final int indexThrottleSize;
-	private final TimeValue indexBulkTimeout;
+	private final long indexBulkTimeout;
 
 	@Inject
 	public ArangoDbConfig( //
@@ -54,35 +60,35 @@ public class ArangoDbConfig {
 		riverName = pRiverName.name();
 
 		// arangodb
-		arangodbHost = rsw.getString("arangodb.host", "localhost");
-		arangodbPort = rsw.getInteger("arangodb.port", 8529);
-		arangodbDatabase = rsw.getString("arangodb.db", riverName);
-		arangodbCollection = rsw.getString("arangodb.collection", riverName);
+		arangodbHost = notBlank(rsw.getString("arangodb.host", "localhost"));
+		arangodbPort = validPortNumber(rsw.getInteger("arangodb.port", 8529));
+		arangodbDatabase = notBlank(rsw.getString("arangodb.db", riverName));
+		arangodbCollection = notBlank(rsw.getString("arangodb.collection", riverName));
 
 		String scriptString = rsw.getString("arangodb.script", null);
-		String scriptLang = rsw.getString("arangodb.scriptType", "js");
+		String scriptLang = notBlank(rsw.getString("arangodb.scriptType", "js"));
 		arangodbScript = scriptService.executable(scriptLang, scriptString, ScriptType.INLINE, newHashMap());
 
 		// arangodb.options
-		arangodbOptionsFullSync = rsw.getBool("arangodb.options.full_sync", false);
-		arangodbOptionsDropcollection = rsw.getBool("arangodb.options.drop_collection", true);
+		arangodbFullSync = rsw.getBool("arangodb.full_sync", false);
+		arangodbDropcollection = rsw.getBool("arangodb.drop_collection", true);
+		arangodbMinWait = positive(rsw.getTimeValue("arangodb.min_wait", timeValueMillis(100)).millis());
+		arangodbMaxWait = positive(rsw.getTimeValue("arangodb.max_wait", timeValueMillis(10_000)).millis());
 
 		Set<String> excludes = newHashSet("_id", "_key", "_rev");
 		excludes.addAll(rsw.getList("arangodb.options.exclude_fields"));
 		arangodbOptionsExcludeFields = unmodifiableSet(excludes);
 
 		// arangodb.credentials
-		arangodbCredentialsUsername = rsw.getString("arangodb.credentials.username", "");
-		arangodbCredentialsPassword = rsw.getString("arangodb.credentials.password", "");
+		arangodbCredentialsUsername = notBlank(rsw.getString("arangodb.credentials.username", ""));
+		arangodbCredentialsPassword = notBlank(rsw.getString("arangodb.credentials.password", ""));
 
 		// index
-		indexName = rsw.getString("index.name", riverName);
-		indexType = rsw.getString("index.type", riverName);
-		indexBulkSize = rsw.getInteger("index.bulk_size", 100);
+		indexName = notBlank(rsw.getString("index.name", riverName));
+		indexType = notBlank(rsw.getString("index.type", riverName));
+		indexBulkSize = positive(rsw.getInteger("index.bulk_size", 100));
 		indexThrottleSize = rsw.getInteger("index.throttle_size", indexBulkSize * 5);
-
-		String bulkTimeoutString = rsw.getString("index.bulk_timeout", "10ms");
-		indexBulkTimeout = TimeValue.parseTimeValue(bulkTimeoutString, null);
+		indexBulkTimeout = positive(rsw.getTimeValue("index.bulk_timeout", timeValueMillis(10)).millis());
 
 		// event stream from producer to consumer
 		if (indexThrottleSize == -1) {
@@ -91,7 +97,6 @@ public class ArangoDbConfig {
 		else {
 			eventStream = new ArrayBlockingQueue<Map<String, Object>>(indexThrottleSize);
 		}
-
 	}
 
 	public String getRiverIndexName() {
@@ -126,12 +131,20 @@ public class ArangoDbConfig {
 		return arangodbScript;
 	}
 
-	public boolean getArangodbOptionsFullSync() {
-		return arangodbOptionsFullSync;
+	public boolean getArangodbFullSync() {
+		return arangodbFullSync;
 	}
 
-	public boolean getArangodbOptionsDropcollection() {
-		return arangodbOptionsDropcollection;
+	public boolean getArangodbDropcollection() {
+		return arangodbDropcollection;
+	}
+
+	public long getArangodbMinWait() {
+		return arangodbMinWait;
+	}
+
+	public long getArangodbMaxWait() {
+		return arangodbMaxWait;
 	}
 
 	public Set<String> getArangodbOptionsExcludeFields() {
@@ -162,7 +175,7 @@ public class ArangoDbConfig {
 		return indexThrottleSize;
 	}
 
-	public TimeValue getIndexBulkTimeout() {
+	public long getIndexBulkTimeout() {
 		return indexBulkTimeout;
 	}
 }

@@ -1,13 +1,17 @@
 package org.elasticsearch.river.arangodb.wal.states;
 
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 import org.elasticsearch.river.arangodb.wal.BaseState;
 import org.elasticsearch.river.arangodb.wal.StateMachine;
 
+@Singleton
 public class DropCollection extends BaseState {
 
 	private final Sleep sleep;
 
+	@Inject
 	public DropCollection(StateMachine stateMachine, ArangoDbConfig config, Sleep sleep) {
 		super(stateMachine, config);
 		this.sleep = sleep;
@@ -29,7 +33,7 @@ public class DropCollection extends BaseState {
 		StateMachine sm = getStateMachine();
 		sm.pop();
 
-		sleep.resetErrorCounter();
+		sleep.resetErrorCount();
 		sm.push(sleep);
 	}
 

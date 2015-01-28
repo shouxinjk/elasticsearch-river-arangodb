@@ -14,24 +14,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
 
-import net.swisstech.swissarmyknife.io.Closeables;
+import net.swisstech.arangodb.WalClient;
+import net.swisstech.arangodb.model.ArangoDbCollection;
+import net.swisstech.arangodb.model.CollectionParameters;
+import net.swisstech.arangodb.model.Inventory;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
-import org.elasticsearch.common.inject.name.Named;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
-import org.elasticsearch.river.RiverIndexName;
-import org.elasticsearch.river.RiverName;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 import org.json.JSONException;
 
@@ -45,47 +42,55 @@ public class Slurper implements Runnable, Closeable {
 
 	private volatile boolean keepRunning = true;
 
-	private String currentTick;
-	private CloseableHttpClient arangoHttpClient;
-
 	private final ArangoDbConfig config;
-	private final Client client;
-	private final String riverIndexName;
-	private final RiverName riverName;
-	private CloseableHttpClient httpClient;
-	private final BlockingQueue<Map<String, Object>> stream;
-	private final String replogUriTemplate;
+	private final WalClient client;
 
 	@Inject
-	public Slurper( //
-	ArangoDbConfig config, //
-		Client client, //
-		@RiverIndexName final String riverIndexName, //
-		RiverName riverName, //
-		@Named("arangodb_river_httpclient") CloseableHttpClient httpClient, //
-		@Named("arangodb_river_eventstream") BlockingQueue<Map<String, Object>> stream //
-	) {
+	public Slurper(ArangoDbConfig config, WalClient client) {
 		this.config = config;
-		this.client = client;
-		this.riverIndexName = riverIndexName;
-		this.riverName = riverName;
-		this.httpClient = httpClient;
-		this.stream = stream;
+	}
 
-		replogUriTemplate = new StringBuilder().append("http://") //
-			.append(config.getArangodbHost()) //
-			.append(":") //
-			.append(config.getArangodbPort()) //
-			.append("/_db/") //
-			.append(config.getArangodbDatabase()) //
-			.append("/_api/replication/dump?collection=") //
-			.append(config.getArangodbCollection()) //
-			.append("&from=") //
-			.toString();
+	@Override
+	public void close() {
+		keepRunning = false;
 	}
 
 	@Override
 	public void run() {
+
+		while (keepRunning) {
+
+			try {
+
+			}
+			catch (ArangoDbException e) {
+
+			}
+			catch (InterruptedException e) {
+
+			}
+
+		}
+
+	}
+
+	private long extractTick(Inventory inventory) {
+		String tick = inventory.getTick();
+		return Long.parseLong(tick);
+	}
+
+	private boolean findCollection(Inventory inventory, String collectionName) {
+		for (ArangoDbCollection coll : inventory.getCollections()) {
+			CollectionParameters params = coll.getParameters();
+			String name = params.getName();
+			if (collectionName.equals(name)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void runnnn() {
 		logger.info("=== river-arangodb slurper running ... ===");
 
 		currentTick = fetchLastTick(config.getArangodbCollection());
@@ -256,11 +261,5 @@ public class Slurper implements Runnable, Closeable {
 		}
 
 		return null;
-	}
-
-	@Override
-	public void close() {
-		keepRunning = false;
-		Closeables.close(arangoHttpClient);
 	}
 }

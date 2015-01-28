@@ -2,6 +2,8 @@ package org.elasticsearch.river.arangodb.wal;
 
 import java.io.Closeable;
 
+import net.swisstech.swissarmyknife.util.Stack;
+
 public class StateMachine implements Runnable, Closeable {
 
 	private final Stack<State> states = new Stack<>();
