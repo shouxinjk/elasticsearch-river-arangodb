@@ -6,8 +6,8 @@ This is an ElasticSearch plugin that will connect to your ArangoDB server, read 
 
 | Branch | Status |
 |--------|--------|
-| Master | [![master](https://travis-ci.org/triAGENS/elasticsearch-river-arangodb.svg?branch=master)](https://travis-ci.org/triAGENS/elasticsearch-river-arangodb) |
-| Devel  | [![devel](https://travis-ci.org/triAGENS/elasticsearch-river-arangodb.svg?branch=devel)](https://travis-ci.org/triAGENS/elasticsearch-river-arangodb) |
+| Master | [![master](https://travis-ci.org/arangodb/elasticsearch-river-arangodb.svg?branch=master)](https://travis-ci.org/arangodb/elasticsearch-river-arangodb) |
+| Devel  | [![devel](https://travis-ci.org/arangodb/elasticsearch-river-arangodb.svg?branch=devel)](https://travis-ci.org/arangodb/elasticsearch-river-arangodb) |
 
 # Version Compatibility
 
@@ -90,9 +90,9 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
 
 # Installation
 
-* TODO [`elasticsearch-river-arangodb-0.4.0.zip`](https://github.com/triAGENS/elasticsearch-river-arangodb/releases/download/v0.4.0/elasticsearch-river-arangodb-0.4.0.zip)
-* [`elasticsearch-river-arangodb-0.3.0.zip`](https://github.com/triAGENS/elasticsearch-river-arangodb/releases/download/v0.3.0/elasticsearch-river-arangodb-0.3.0.zip)
-* [`elasticsearch-river-arangodb-0.2.0.zip`](https://github.com/triAGENS/elasticsearch-river-arangodb/releases/download/v0.2.0/elasticsearch-river-arangodb-0.2.0.zip)
+* TODO [`elasticsearch-river-arangodb-0.4.0.zip`](https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/v0.4.0/elasticsearch-river-arangodb-0.4.0.zip)
+* [`elasticsearch-river-arangodb-0.3.0.zip`](https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/v0.3.0/elasticsearch-river-arangodb-0.3.0.zip)
+* [`elasticsearch-river-arangodb-0.2.0.zip`](https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/v0.2.0/elasticsearch-river-arangodb-0.2.0.zip)
 
 The zip file contains all necessary dependencies and nothing else is needed to install it in elasticsearch.
 
