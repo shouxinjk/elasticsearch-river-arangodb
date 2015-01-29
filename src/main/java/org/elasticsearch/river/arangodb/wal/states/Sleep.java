@@ -22,8 +22,8 @@ public class Sleep extends BaseState {
 	@Inject
 	public Sleep(StateMachine stateMachine, ArangoDbConfig config) {
 		super(stateMachine, config, SLEEP);
-		long minWait = config.getArangodbMinWait();
-		long maxWait = config.getArangodbMaxWait();
+		long minWait = config.getArangodbReaderMinSleep();
+		long maxWait = config.getArangodbReaderMaxSleep();
 		waitTime = new BoundedLong(minWait, maxWait);
 	}
 

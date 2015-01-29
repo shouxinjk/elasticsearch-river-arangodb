@@ -38,8 +38,8 @@ public class ArangoDbConfig {
 	private final ExecutableScript arangodbScript;
 	private final boolean arangodbFullSync;
 	private final boolean arangodbDropcollection;
-	private final long arangodbMinWait;
-	private final long arangodbMaxWait;
+	private final long arangodbReaderMinSleep;
+	private final long arangodbReaderMaxSleep;
 	private final Set<String> arangodbOptionsExcludeFields;
 	private final String arangodbCredentialsUsername;
 	private final String arangodbCredentialsPassword;
@@ -73,8 +73,8 @@ public class ArangoDbConfig {
 		// arangodb.options
 		arangodbFullSync = rsw.getBool("arangodb.full_sync", false);
 		arangodbDropcollection = rsw.getBool("arangodb.drop_collection", true);
-		arangodbMinWait = positive(rsw.getTimeValue("arangodb.min_wait", timeValueMillis(100)).millis());
-		arangodbMaxWait = positive(rsw.getTimeValue("arangodb.max_wait", timeValueMillis(10_000)).millis());
+		arangodbReaderMinSleep = positive(rsw.getTimeValue("arangodb.reader_min_sleep", timeValueMillis(100)).millis());
+		arangodbReaderMaxSleep = positive(rsw.getTimeValue("arangodb.reader_max_sleep", timeValueMillis(10_000)).millis());
 
 		Set<String> excludes = newHashSet("_id", "_key", "_rev");
 		excludes.addAll(rsw.getList("arangodb.options.exclude_fields"));
@@ -140,12 +140,12 @@ public class ArangoDbConfig {
 		return arangodbDropcollection;
 	}
 
-	public long getArangodbMinWait() {
-		return arangodbMinWait;
+	public long getArangodbReaderMinSleep() {
+		return arangodbReaderMinSleep;
 	}
 
-	public long getArangodbMaxWait() {
-		return arangodbMaxWait;
+	public long getArangodbReaderMaxSleep() {
+		return arangodbReaderMaxSleep;
 	}
 
 	public Set<String> getArangodbOptionsExcludeFields() {
