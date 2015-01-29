@@ -3,18 +3,13 @@ package org.elasticsearch.river.arangodb.es;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.elasticsearch.client.Requests.indexRequest;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.elasticsearch.river.arangodb.ArangoConstants.LAST_TICK_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.NAME_FIELD;
-import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_ENTRY_UNDEFINED;
-import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_FIELD_KEY;
-import static org.elasticsearch.river.arangodb.ArangoConstants.REPLOG_FIELD_TICK;
-import static org.elasticsearch.river.arangodb.ArangoConstants.RIVER_TYPE;
-import static org.elasticsearch.river.arangodb.ArangoConstants.STREAM_FIELD_OPERATION;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+
+import net.swisstech.arangodb.model.wal.WalEvent;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -24,23 +19,20 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.StopWatch;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
-import org.elasticsearch.common.inject.name.Named;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.river.RiverIndexName;
-import org.elasticsearch.river.RiverName;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 import org.elasticsearch.script.ExecutableScript;
 
 @Singleton
 public class Indexer implements Runnable, Closeable {
 
-	private final ESLogger logger = ESLoggerFactory.getLogger(this.getClass().getName());
+	private static final ESLogger logger = ESLoggerFactory.getLogger(Indexer.class.getName());
 
-	private volatile boolean keepRunning = true;
+	private boolean keepRunning = true;
 
 	private int deletedDocuments = 0;
 	private int insertedDocuments = 0;
@@ -48,28 +40,18 @@ public class Indexer implements Runnable, Closeable {
 
 	private final ArangoDbConfig config;
 	private final Client client;
-	private final String riverIndexName;
-	private final RiverName riverName;
-	private final BlockingQueue<Map<String, Object>> stream;
 
 	@Inject
-	public Indexer( //
-	ArangoDbConfig config, //
-		Client client, //
-		@RiverIndexName final String riverIndexName, //
-		RiverName riverName, //
-		@Named("arangodb_river_eventstream") BlockingQueue<Map<String, Object>> stream //
-	) {
+	public Indexer(ArangoDbConfig config, Client client) {
 		this.config = config;
 		this.client = client;
-		this.riverIndexName = riverIndexName;
-		this.riverName = riverName;
-		this.stream = stream;
 	}
 
 	@Override
 	public void run() {
 		logger.info("=== river-arangodb indexer running ... ===");
+
+		BlockingQueue<WalEvent> stream = config.getEventStream();
 
 		while (keepRunning) {
 			StopWatch sw = new StopWatch().start();
@@ -83,7 +65,7 @@ public class Indexer implements Runnable, Closeable {
 				BulkRequestBuilder bulk = client.prepareBulk();
 
 				// 1. Attempt to fill as much of the bulk request as possible
-				Map<String, Object> data = stream.take();
+				WalEvent data = stream.take();
 				lastTick = updateBulkRequest(bulk, data);
 
 				while ((data = stream.poll(config.getIndexBulkTimeout().millis(), MILLISECONDS)) != null) {
@@ -262,41 +244,6 @@ public class Indexer implements Runnable, Closeable {
 		catch (IOException e) {
 			logger.error("error updating last Tick for collection {}", namespace);
 		}
-	}
-
-	private XContentBuilder build(final Map<String, Object> data, final String objectId) throws IOException {
-		return XContentFactory.jsonBuilder().map(data);
-	}
-
-	private String extractParent(Map<String, Object> ctx) {
-		return (String) ctx.get("_parent");
-	}
-
-	private String extractRouting(Map<String, Object> ctx) {
-		return (String) ctx.get("_routing");
-	}
-
-	private String extractType(Map<String, Object> ctx) {
-		String type = (String) ctx.get("_type");
-		if (type == null) {
-			return config.getIndexType();
-		}
-		return type;
-	}
-
-	private String extractIndex(Map<String, Object> ctx) {
-		String index = (String) ctx.get("_index");
-		if (index == null) {
-			return config.getIndexName();
-		}
-		return index;
-	}
-
-	private void logStatistics(StopWatch sw) {
-		long totalDocuments = deletedDocuments + insertedDocuments;
-		long totalTimeInSeconds = sw.stop().totalTime().seconds();
-		long totalDocumentsPerSecond = (totalTimeInSeconds == 0) ? totalDocuments : totalDocuments / totalTimeInSeconds;
-		logger.info("Indexed {} documents, {} insertions {}, updates, {} deletions, {} documents per second", totalDocuments, insertedDocuments, updatedDocuments, deletedDocuments, totalDocumentsPerSecond);
 	}
 
 	@Override
