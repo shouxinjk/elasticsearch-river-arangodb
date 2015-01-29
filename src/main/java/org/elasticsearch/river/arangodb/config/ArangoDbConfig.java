@@ -9,11 +9,12 @@ import static net.swisstech.swissarmyknife.util.Sets.newHashSet;
 import static org.elasticsearch.common.collect.Maps.newHashMap;
 import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
+
+import net.swisstech.arangodb.model.wal.WalEvent;
 
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
@@ -29,7 +30,7 @@ public class ArangoDbConfig {
 
 	private final String riverIndexName;
 	private final String riverName;
-	private final BlockingQueue<Map<String, Object>> eventStream;
+	private final BlockingQueue<WalEvent> eventStream;
 	private final String arangodbHost;
 	private final int arangodbPort;
 	private final String arangodbDatabase;
@@ -92,10 +93,10 @@ public class ArangoDbConfig {
 
 		// event stream from producer to consumer
 		if (indexThrottleSize == -1) {
-			eventStream = new LinkedTransferQueue<Map<String, Object>>();
+			eventStream = new LinkedTransferQueue<WalEvent>();
 		}
 		else {
-			eventStream = new ArrayBlockingQueue<Map<String, Object>>(indexThrottleSize);
+			eventStream = new ArrayBlockingQueue<WalEvent>(indexThrottleSize);
 		}
 	}
 
@@ -107,7 +108,7 @@ public class ArangoDbConfig {
 		return riverName;
 	}
 
-	public BlockingQueue<Map<String, Object>> getEventStream() {
+	public BlockingQueue<WalEvent> getEventStream() {
 		return eventStream;
 	}
 

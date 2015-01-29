@@ -43,9 +43,9 @@ public class ArangoDbRiverModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	@Named("arangodb_river_slurper_threadfactory")
+	@Named("arangodb_river_walReaderRunnable_threadfactory")
 	public ThreadFactory getSlurperThreadFactory(RiverSettings settings) {
-		return EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_slurper");
+		return EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_walreader");
 	}
 
 	@Provides

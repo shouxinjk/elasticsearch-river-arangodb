@@ -18,18 +18,19 @@ import org.elasticsearch.river.River;
 import org.elasticsearch.river.RiverName;
 import org.elasticsearch.river.RiverSettings;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
+import org.elasticsearch.river.arangodb.wal.WalReaderRunnable;
 import org.elasticsearch.script.ScriptService;
 
 public class ArangoDbRiver extends AbstractRiverComponent implements River {
 
 	private final Client client;
 	private final ArangoDbConfig config;
-	private final Slurper slurper;
+	private final WalReaderRunnable walReaderRunnable;
 	private final Indexer indexer;
-	private final ThreadFactory slurperThreadFactory;
+	private final ThreadFactory walReaderThreadFactory;
 	private final ThreadFactory indexerThreadFactory;
 
-	private Thread slurperThread;
+	private Thread walReaderThread;
 	private Thread indexerThread;
 
 	@Inject
@@ -39,9 +40,9 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 		final Client client, //
 		final ScriptService scriptService, //
 		final ArangoDbConfig config, //
-		final Slurper slurper, //
+		final WalReaderRunnable walReaderRunnable, //
 		final Indexer indexer, //
-		@Named("arangodb_river_slurper_threadfactory") final ThreadFactory slurperThreadFactory, //
+		@Named("arangodb_river_walReaderRunnable_threadfactory") final ThreadFactory walReaderRunnableThreadFactory, //
 		@Named("arangodb_river_indexer_threadfactory") final ThreadFactory indexerThreadFactory //
 	) throws ArangoDbException {
 
@@ -49,9 +50,9 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 
 		this.client = client;
 		this.config = config;
-		this.slurper = slurper;
+		this.walReaderRunnable = walReaderRunnable;
 		this.indexer = indexer;
-		this.slurperThreadFactory = slurperThreadFactory;
+		this.walReaderThreadFactory = walReaderRunnableThreadFactory;
 		this.indexerThreadFactory = indexerThreadFactory;
 
 		logger.debug("Prefix: [{}] - name: [{}]", logger.getPrefix(), logger.getName());
@@ -87,8 +88,8 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 			}
 		}
 
-		slurperThread = slurperThreadFactory.newThread(slurper);
-		slurperThread.start();
+		walReaderThread = walReaderThreadFactory.newThread(walReaderRunnable);
+		walReaderThread.start();
 
 		indexerThread = indexerThreadFactory.newThread(indexer);
 		indexerThread.start();
@@ -100,12 +101,12 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 	public void close() {
 		logger.info("closing arangodb stream river");
 
-		Closeables.close(slurper);
+		Closeables.close(walReaderRunnable);
 		Closeables.close(indexer);
 
 		Threads.sleepFor(100);
 
-		interruptAndJoin(slurperThread, 50);
+		interruptAndJoin(walReaderThread, 50);
 		interruptAndJoin(indexerThread, 50);
 	}
 }

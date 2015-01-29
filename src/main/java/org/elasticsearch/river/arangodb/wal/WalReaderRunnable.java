@@ -6,14 +6,14 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
 
 @Singleton
-public class StateMachineRunnable implements Runnable, Closeable {
+public class WalReaderRunnable implements Runnable, Closeable {
 
 	private final StateMachine data;
 
 	private boolean keepRunning;
 
 	@Inject
-	public StateMachineRunnable(StateMachine data) {
+	public WalReaderRunnable(StateMachine data) {
 		this.data = data;
 	}
 
