@@ -1,4 +1,4 @@
-package org.elasticsearch.river.arangodb;
+package org.elasticsearch.river.arangodb.es;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.elasticsearch.client.Requests.indexRequest;

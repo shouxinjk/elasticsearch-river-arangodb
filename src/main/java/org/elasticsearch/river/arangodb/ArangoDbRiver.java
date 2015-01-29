@@ -18,6 +18,7 @@ import org.elasticsearch.river.River;
 import org.elasticsearch.river.RiverName;
 import org.elasticsearch.river.RiverSettings;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
+import org.elasticsearch.river.arangodb.es.Indexer;
 import org.elasticsearch.river.arangodb.wal.WalReaderRunnable;
 import org.elasticsearch.script.ScriptService;
 
