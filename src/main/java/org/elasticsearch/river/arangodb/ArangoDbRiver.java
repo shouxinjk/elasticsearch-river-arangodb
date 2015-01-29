@@ -1,11 +1,11 @@
 package org.elasticsearch.river.arangodb;
 
 import static ch.bind.philib.lang.ThreadUtil.interruptAndJoin;
+import static net.swisstech.swissarmyknife.lang.Threads.sleepFor;
 
 import java.util.concurrent.ThreadFactory;
 
 import net.swisstech.swissarmyknife.io.Closeables;
-import net.swisstech.swissarmyknife.lang.Threads;
 
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.client.Client;
@@ -52,7 +52,7 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 		this.config = config;
 		this.walReaderRunnable = walReaderRunnable;
 		this.indexer = indexer;
-		this.walReaderThreadFactory = walReaderRunnableThreadFactory;
+		walReaderThreadFactory = walReaderRunnableThreadFactory;
 		this.indexerThreadFactory = indexerThreadFactory;
 
 		logger.debug("Prefix: [{}] - name: [{}]", logger.getPrefix(), logger.getName());
@@ -104,7 +104,7 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 		Closeables.close(walReaderRunnable);
 		Closeables.close(indexer);
 
-		Threads.sleepFor(100);
+		sleepFor(100);
 
 		interruptAndJoin(walReaderThread, 50);
 		interruptAndJoin(indexerThread, 50);
