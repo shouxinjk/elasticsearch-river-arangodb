@@ -115,6 +115,7 @@ public class RiverSettingsWrapper {
 		return getList(path, Collections.<String> emptyList());
 	}
 
+	@SuppressWarnings("unchecked")
 	public List<String> getList(String path, List<String> defaultValue) {
 		Object value = extract(path);
 		if (value == null) {
