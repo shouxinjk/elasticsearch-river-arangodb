@@ -24,7 +24,7 @@ import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
-/** config object and holder of shared object */
+/** config object and holder of shared objects */
 @Singleton
 public class ArangoDbConfig {
 
