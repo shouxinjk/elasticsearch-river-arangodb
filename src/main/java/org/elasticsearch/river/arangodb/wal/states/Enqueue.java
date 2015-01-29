@@ -1,5 +1,8 @@
 package org.elasticsearch.river.arangodb.wal.states;
 
+import static org.elasticsearch.river.arangodb.wal.StateName.ENQUEUE;
+import static org.elasticsearch.river.arangodb.wal.StateName.READ_WAL;
+import static org.elasticsearch.river.arangodb.wal.StateName.SLEEP;
 import net.swisstech.arangodb.model.wal.WalDump;
 
 import org.elasticsearch.common.inject.Inject;
@@ -11,16 +14,11 @@ import org.elasticsearch.river.arangodb.wal.StateMachine;
 @Singleton
 public class Enqueue extends BaseState {
 
-	private final ReadWal readWal;
-	private final Sleep sleep;
-
 	private WalDump data;
 
 	@Inject
-	public Enqueue(StateMachine stateMachine, ArangoDbConfig config, ReadWal readWal, Sleep sleep) {
-		super(stateMachine, config);
-		this.readWal = readWal;
-		this.sleep = sleep;
+	public Enqueue(StateMachine stateMachine, ArangoDbConfig config) {
+		super(stateMachine, config, ENQUEUE);
 	}
 
 	@Override
@@ -34,16 +32,18 @@ public class Enqueue extends BaseState {
 		/*
 		 * next state
 		 */
-		StateMachine sm = getStateMachine();
-		sm.pop();
+
+		stateMachine.pop();
 
 		// we will be reading the WAL again
-		sm.push(readWal);
+		ReadWal readWal = (ReadWal) stateMachine.get(READ_WAL);
+		stateMachine.push(readWal);
 
 		// we may need to sleep
 		boolean checkMore = data.getHeaders().getReplicationCheckmore();
 		if (!checkMore) {
-			sm.push(sleep);
+			Sleep sleep = (Sleep) stateMachine.get(SLEEP);
+			stateMachine.push(sleep);
 		}
 	}
 

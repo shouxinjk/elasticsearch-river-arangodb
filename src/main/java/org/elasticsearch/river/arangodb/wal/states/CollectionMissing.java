@@ -1,5 +1,9 @@
 package org.elasticsearch.river.arangodb.wal.states;
 
+import static org.elasticsearch.river.arangodb.wal.StateName.COLLECTION_CHECK;
+import static org.elasticsearch.river.arangodb.wal.StateName.COLLECTION_MISSING;
+import static org.elasticsearch.river.arangodb.wal.StateName.DROP_COLLECTION;
+
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
@@ -9,14 +13,9 @@ import org.elasticsearch.river.arangodb.wal.StateMachine;
 @Singleton
 public class CollectionMissing extends BaseState {
 
-	private final DropCollection dropCollection;
-	private final CollectionCheck collectionCheck;
-
 	@Inject
-	public CollectionMissing(StateMachine stateMachine, ArangoDbConfig config, DropCollection dropCollection, CollectionCheck collectionCheck) {
-		super(stateMachine, config);
-		this.dropCollection = dropCollection;
-		this.collectionCheck = collectionCheck;
+	public CollectionMissing(StateMachine stateMachine, ArangoDbConfig config) {
+		super(stateMachine, config, COLLECTION_MISSING);
 	}
 
 	@Override
@@ -26,20 +25,21 @@ public class CollectionMissing extends BaseState {
 		 * do work
 		 */
 
-		boolean doDrop = getConfig().getArangodbDropcollection();
+		boolean doDrop = config.getArangodbDropcollection();
 
 		/*
 		 * next state
 		 */
 
-		StateMachine sm = getStateMachine();
-		sm.pop();
+		stateMachine.pop();
 
 		if (doDrop) {
-			sm.push(dropCollection);
+			DropCollection dropCollection = (DropCollection) stateMachine.get(DROP_COLLECTION);
+			stateMachine.push(dropCollection);
 		}
 		else {
-			sm.push(collectionCheck);
+			CollectionCheck collectionCheck = (CollectionCheck) stateMachine.get(COLLECTION_CHECK);
+			stateMachine.push(collectionCheck);
 		}
 	}
 }

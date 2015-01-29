@@ -1,5 +1,8 @@
 package org.elasticsearch.river.arangodb.wal.states;
 
+import static org.elasticsearch.river.arangodb.wal.StateName.DROP_COLLECTION;
+import static org.elasticsearch.river.arangodb.wal.StateName.SLEEP;
+
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
@@ -9,12 +12,9 @@ import org.elasticsearch.river.arangodb.wal.StateMachine;
 @Singleton
 public class DropCollection extends BaseState {
 
-	private final Sleep sleep;
-
 	@Inject
-	public DropCollection(StateMachine stateMachine, ArangoDbConfig config, Sleep sleep) {
-		super(stateMachine, config);
-		this.sleep = sleep;
+	public DropCollection(StateMachine stateMachine, ArangoDbConfig config) {
+		super(stateMachine, config, DROP_COLLECTION);
 	}
 
 	@Override
@@ -30,11 +30,11 @@ public class DropCollection extends BaseState {
 		 * next state
 		 */
 
-		StateMachine sm = getStateMachine();
-		sm.pop();
+		stateMachine.pop();
 
+		Sleep sleep = (Sleep) stateMachine.get(SLEEP);
 		sleep.resetErrorCount();
-		sm.push(sleep);
+		stateMachine.push(sleep);
 	}
 
 	private void dropCollection() {

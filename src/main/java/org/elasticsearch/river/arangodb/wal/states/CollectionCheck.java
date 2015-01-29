@@ -1,5 +1,9 @@
 package org.elasticsearch.river.arangodb.wal.states;
 
+import static org.elasticsearch.river.arangodb.wal.StateName.COLLECTION_CHECK;
+import static org.elasticsearch.river.arangodb.wal.StateName.READ_WAL;
+import static org.elasticsearch.river.arangodb.wal.StateName.SLEEP;
+
 import java.io.IOException;
 
 import net.swisstech.arangodb.WalClient;
@@ -17,15 +21,11 @@ import org.elasticsearch.river.arangodb.wal.StateMachine;
 public class CollectionCheck extends BaseState {
 
 	private final WalClient client;
-	private final ReadWal readWal;
-	private final Sleep sleep;
 
 	@Inject
-	public CollectionCheck(StateMachine stateMachine, ArangoDbConfig config, WalClient client, ReadWal readWal, Sleep sleep) {
-		super(stateMachine, config);
+	public CollectionCheck(StateMachine stateMachine, ArangoDbConfig config, WalClient client) {
+		super(stateMachine, config, COLLECTION_CHECK);
 		this.client = client;
-		this.readWal = readWal;
-		this.sleep = sleep;
 	}
 
 	@Override
@@ -41,19 +41,20 @@ public class CollectionCheck extends BaseState {
 		 * next state
 		 */
 
-		StateMachine sm = getStateMachine();
+		Sleep sleep = (Sleep) stateMachine.get(SLEEP);
 		if (found) {
 			sleep.resetErrorCount();
 
 			// remove self
-			sm.pop();
+			stateMachine.pop();
 
 			// next step is to read the WAL
-			sm.push(readWal);
+			ReadWal readWal = (ReadWal) stateMachine.get(READ_WAL);
+			stateMachine.push(readWal);
 		}
 		else {
 			sleep.increaseErrorCount();
-			sm.push(sleep);
+			stateMachine.push(sleep);
 		}
 	}
 
@@ -66,7 +67,7 @@ public class CollectionCheck extends BaseState {
 			return false;
 		}
 
-		String name = getConfig().getArangodbCollection();
+		String name = config.getArangodbCollection();
 		for (ArangoDbCollection collection : inventory.getCollections()) {
 			CollectionParameters params = collection.getParameters();
 			String collName = params.getName();

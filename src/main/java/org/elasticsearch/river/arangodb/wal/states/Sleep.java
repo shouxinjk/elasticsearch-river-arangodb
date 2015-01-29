@@ -1,6 +1,7 @@
 package org.elasticsearch.river.arangodb.wal.states;
 
 import static net.swisstech.swissarmyknife.lang.Threads.sleepFor;
+import static org.elasticsearch.river.arangodb.wal.StateName.SLEEP;
 import net.swisstech.swissarmyknife.lang.BoundedLong;
 
 import org.elasticsearch.common.inject.Inject;
@@ -11,7 +12,7 @@ import org.elasticsearch.river.arangodb.wal.StateMachine;
 
 /**
  * reusable transient state, only removes itself from the stack but never decides on the next state. the state scheduling a Sleep must decide on the next state
- * beforehand
+ * beforehand.
  */
 @Singleton
 public class Sleep extends BaseState {
@@ -20,7 +21,7 @@ public class Sleep extends BaseState {
 
 	@Inject
 	public Sleep(StateMachine stateMachine, ArangoDbConfig config) {
-		super(stateMachine, config);
+		super(stateMachine, config, SLEEP);
 		long minWait = config.getArangodbMinWait();
 		long maxWait = config.getArangodbMaxWait();
 		waitTime = new BoundedLong(minWait, maxWait);
@@ -40,7 +41,7 @@ public class Sleep extends BaseState {
 		 * next state
 		 */
 
-		getStateMachine().pop();
+		stateMachine.pop();
 	}
 
 	public void resetErrorCount() {
