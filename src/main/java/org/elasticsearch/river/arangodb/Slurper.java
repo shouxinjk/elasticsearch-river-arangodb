@@ -16,9 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import net.swisstech.arangodb.WalClient;
-import net.swisstech.arangodb.model.ArangoDbCollection;
-import net.swisstech.arangodb.model.CollectionParameters;
-import net.swisstech.arangodb.model.Inventory;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -74,21 +71,7 @@ public class Slurper implements Runnable, Closeable {
 
 	}
 
-	private long extractTick(Inventory inventory) {
-		String tick = inventory.getTick();
-		return Long.parseLong(tick);
-	}
 
-	private boolean findCollection(Inventory inventory, String collectionName) {
-		for (ArangoDbCollection coll : inventory.getCollections()) {
-			CollectionParameters params = coll.getParameters();
-			String name = params.getName();
-			if (collectionName.equals(name)) {
-				return true;
-			}
-		}
-		return false;
-	}
 
 	public void runnnn() {
 		logger.info("=== river-arangodb slurper running ... ===");

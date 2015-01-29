@@ -21,7 +21,7 @@ public class ReadWal extends BaseState {
 
 	private final WalClient client;
 
-	private long lastTick = 0;
+	private long tick = 0;
 
 	@Inject
 	public ReadWal(StateMachine stateMachine, ArangoDbConfig config, WalClient client) {
@@ -40,7 +40,7 @@ public class ReadWal extends BaseState {
 		WalDump dump = null;
 		int code = 0;
 		try {
-			dump = client.dump(collName, lastTick);
+			dump = client.dump(collName, tick);
 			code = dump.getResponseCode();
 		}
 		catch (IOException e) {
@@ -51,27 +51,22 @@ public class ReadWal extends BaseState {
 		 * next state
 		 */
 
+		Sleep sleep = (Sleep) stateMachine.get(SLEEP);
+		Enqueue enqueue = (Enqueue) stateMachine.get(ENQUEUE);
 
 		if (dump == null) {
 			// this is bad! maybe just a temporary network error?
-			Sleep sleep = (Sleep) stateMachine.get(SLEEP);
-
 			sleep.increaseErrorCount();
 			stateMachine.push(sleep);
 		}
 		else if (200 == code) {
-			Sleep sleep = (Sleep) stateMachine.get(SLEEP);
-			Enqueue enqueue = (Enqueue) stateMachine.get(ENQUEUE);
-
-			lastTick = dump.getHeaders().getReplicationLastincluded();
+			tick = dump.getHeaders().getReplicationLastincluded();
 			sleep.resetErrorCount();
 			enqueue.setData(dump);
 			stateMachine.pop();
 			stateMachine.push(enqueue);
 		}
 		else if (204 == code) {
-			Sleep sleep = (Sleep) stateMachine.get(SLEEP);
-
 			if (dump.getHeaders().getReplicationCheckmore()) {
 				// no op, go straight back to reading the WAL
 			}
@@ -81,12 +76,13 @@ public class ReadWal extends BaseState {
 			}
 		}
 		else if (404 == code) {
+			tick = -1;
 			stateMachine.pop();
 			stateMachine.push(COLLECTION_MISSING);
 		}
 	}
 
-	public void setLastTick(long lastTick) {
-		this.lastTick = lastTick;
+	public void setTick(long lastTick) {
+		tick = lastTick;
 	}
 }

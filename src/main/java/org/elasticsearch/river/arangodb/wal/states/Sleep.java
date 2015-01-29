@@ -41,6 +41,8 @@ public class Sleep extends BaseState {
 		 * next state
 		 */
 
+		// remove self, we'll return to the previous state or
+		// whatever has been scheduled by the previous state
 		stateMachine.pop();
 	}
 

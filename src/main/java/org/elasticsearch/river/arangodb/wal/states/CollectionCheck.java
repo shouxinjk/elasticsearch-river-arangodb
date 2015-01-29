@@ -1,5 +1,6 @@
 package org.elasticsearch.river.arangodb.wal.states;
 
+import static net.swisstech.swissarmyknife.lang.Numbers.tryParseLong;
 import static org.elasticsearch.river.arangodb.wal.StateName.COLLECTION_CHECK;
 import static org.elasticsearch.river.arangodb.wal.StateName.READ_WAL;
 import static org.elasticsearch.river.arangodb.wal.StateName.SLEEP;
@@ -35,13 +36,26 @@ public class CollectionCheck extends BaseState {
 		 * do work
 		 */
 
-		boolean found = collectionFound();
+		long tick = 0;
+		boolean found = false;
+		Inventory inventory = null;
+		try {
+			inventory = client.inventory();
+		}
+		catch (IOException e) {
+			// this is bad! maybe just a temporary network error?
+		}
+
+		found = findCollection(inventory);
+		tick = extractTick(inventory);
 
 		/*
 		 * next state
 		 */
 
 		Sleep sleep = (Sleep) stateMachine.get(SLEEP);
+		ReadWal readWal = (ReadWal) stateMachine.get(READ_WAL);
+
 		if (found) {
 			sleep.resetErrorCount();
 
@@ -49,7 +63,7 @@ public class CollectionCheck extends BaseState {
 			stateMachine.pop();
 
 			// next step is to read the WAL
-			ReadWal readWal = (ReadWal) stateMachine.get(READ_WAL);
+			readWal.setTick(tick);
 			stateMachine.push(readWal);
 		}
 		else {
@@ -58,15 +72,12 @@ public class CollectionCheck extends BaseState {
 		}
 	}
 
-	private boolean collectionFound() {
-		Inventory inventory = null;
-		try {
-			inventory = client.inventory();
-		}
-		catch (IOException e) {
-			return false;
-		}
+	private long extractTick(Inventory inventory) {
+		String tick = inventory.getTick();
+		return tryParseLong(tick, 0L);
+	}
 
+	private boolean findCollection(Inventory inventory) {
 		String name = config.getArangodbCollection();
 		for (ArangoDbCollection collection : inventory.getCollections()) {
 			CollectionParameters params = collection.getParameters();
@@ -75,7 +86,6 @@ public class CollectionCheck extends BaseState {
 				return true;
 			}
 		}
-
 		return false;
 	}
 }

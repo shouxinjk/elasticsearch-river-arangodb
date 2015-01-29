@@ -27,6 +27,7 @@ public class Enqueue extends BaseState {
 		/*
 		 * do work
 		 */
+
 		enqueue();
 
 		/*
@@ -35,14 +36,15 @@ public class Enqueue extends BaseState {
 
 		stateMachine.pop();
 
-		// we will be reading the WAL again
+		Sleep sleep = (Sleep) stateMachine.get(SLEEP);
 		ReadWal readWal = (ReadWal) stateMachine.get(READ_WAL);
+
+		// we will be reading the WAL again
 		stateMachine.push(readWal);
 
 		// we may need to sleep
 		boolean checkMore = data.getHeaders().getReplicationCheckmore();
 		if (!checkMore) {
-			Sleep sleep = (Sleep) stateMachine.get(SLEEP);
 			stateMachine.push(sleep);
 		}
 	}

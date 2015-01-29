@@ -33,12 +33,13 @@ public class CollectionMissing extends BaseState {
 
 		stateMachine.pop();
 
+		DropCollection dropCollection = (DropCollection) stateMachine.get(DROP_COLLECTION);
+		CollectionCheck collectionCheck = (CollectionCheck) stateMachine.get(COLLECTION_CHECK);
+
 		if (doDrop) {
-			DropCollection dropCollection = (DropCollection) stateMachine.get(DROP_COLLECTION);
 			stateMachine.push(dropCollection);
 		}
 		else {
-			CollectionCheck collectionCheck = (CollectionCheck) stateMachine.get(COLLECTION_CHECK);
 			stateMachine.push(collectionCheck);
 		}
 	}
