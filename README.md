@@ -63,7 +63,6 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
             "username": "riveruser",
             "password": "rivauser"
         },
-        "full_sync": true,
         "reader_min_sleep": "100ms",
         "reader_max_sleep": "10s",
         "drop_collection": false,

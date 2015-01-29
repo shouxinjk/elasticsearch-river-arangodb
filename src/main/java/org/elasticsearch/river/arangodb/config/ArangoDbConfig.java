@@ -36,7 +36,6 @@ public class ArangoDbConfig {
 	private final String arangodbDatabase;
 	private final String arangodbCollection;
 	private final ExecutableScript arangodbScript;
-	private final boolean arangodbFullSync;
 	private final boolean arangodbDropcollection;
 	private final long arangodbReaderMinSleep;
 	private final long arangodbReaderMaxSleep;
@@ -71,7 +70,6 @@ public class ArangoDbConfig {
 		arangodbScript = scriptService.executable(scriptLang, scriptString, ScriptType.INLINE, newHashMap());
 
 		// arangodb.options
-		arangodbFullSync = rsw.getBool("arangodb.full_sync", false);
 		arangodbDropcollection = rsw.getBool("arangodb.drop_collection", true);
 		arangodbReaderMinSleep = positive(rsw.getTimeValue("arangodb.reader_min_sleep", timeValueMillis(100)).millis());
 		arangodbReaderMaxSleep = positive(rsw.getTimeValue("arangodb.reader_max_sleep", timeValueMillis(10_000)).millis());
@@ -130,10 +128,6 @@ public class ArangoDbConfig {
 
 	public ExecutableScript getArangodbScript() {
 		return arangodbScript;
-	}
-
-	public boolean getArangodbFullSync() {
-		return arangodbFullSync;
 	}
 
 	public boolean getArangodbDropcollection() {
