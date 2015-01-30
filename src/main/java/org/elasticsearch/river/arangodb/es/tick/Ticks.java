@@ -31,15 +31,20 @@ public class Ticks {
 	 * create a save request, we don't execute it here because this is intended to be appended to the bulk request as the last part. this will ensure the stored
 	 * tick to be accurate with what has been indexed
 	 */
-	public IndexRequest buildSaveReq(Tick tick) throws IOException {
+	public IndexRequest buildSaveReq(Tick tick) {
 		if (tick == null) {
 			return null;
 		}
-		String json = MAPPER.writeValueAsString(tick);
-		return client //
-			.prepareIndex(index, type, id) //
-			.setSource(json) //
-			.request();
+		try {
+			String json = MAPPER.writeValueAsString(tick);
+			return client //
+				.prepareIndex(index, type, id) //
+				.setSource(json) //
+				.request();
+		}
+		catch (IOException e) {
+			return null;
+		}
 	}
 
 	/** get the last tick from ES */

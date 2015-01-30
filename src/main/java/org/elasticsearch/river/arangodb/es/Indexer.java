@@ -1,27 +1,18 @@
 package org.elasticsearch.river.arangodb.es;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.elasticsearch.client.Requests.indexRequest;
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-
-import net.swisstech.arangodb.model.wal.WalEvent;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.StopWatch;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
@@ -31,8 +22,6 @@ import org.elasticsearch.script.ExecutableScript;
 public class Indexer implements Runnable, Closeable {
 
 	private static final ESLogger logger = ESLoggerFactory.getLogger(Indexer.class.getName());
-
-	private boolean keepRunning = true;
 
 	private int deletedDocuments = 0;
 	private int insertedDocuments = 0;
@@ -47,57 +36,6 @@ public class Indexer implements Runnable, Closeable {
 		this.client = client;
 	}
 
-	@Override
-	public void run() {
-		logger.info("=== river-arangodb indexer running ... ===");
-
-		BlockingQueue<WalEvent> stream = config.getEventStream();
-
-		while (keepRunning) {
-			StopWatch sw = new StopWatch().start();
-
-			deletedDocuments = 0;
-			insertedDocuments = 0;
-			updatedDocuments = 0;
-
-			try {
-				String lastTick = null;
-				BulkRequestBuilder bulk = client.prepareBulk();
-
-				// 1. Attempt to fill as much of the bulk request as possible
-				WalEvent data = stream.take();
-				lastTick = updateBulkRequest(bulk, data);
-
-				while ((data = stream.poll(config.getIndexBulkTimeout().millis(), MILLISECONDS)) != null) {
-					lastTick = updateBulkRequest(bulk, data);
-					if (bulk.numberOfActions() >= config.getIndexBulkSize()) {
-						break;
-					}
-				}
-
-				// 2. Update the Tick
-				if (lastTick != null) {
-					updateLastTick(config.getArangodbCollection(), lastTick, bulk);
-				}
-
-				// 3. Execute the bulk requests
-				try {
-					BulkResponse response = bulk.execute().actionGet();
-					if (response.hasFailures()) {
-						logger.warn("failed to execute" + response.buildFailureMessage());
-					}
-				}
-				catch (Exception e) {
-					logger.warn("failed to execute bulk", e);
-				}
-			}
-			catch (InterruptedException e) {
-				logger.debug("river-arangodb indexer interrupted");
-				Thread.currentThread().interrupt();
-			}
-			logStatistics(sw);
-		}
-	}
 
 	private String updateBulkRequest(final BulkRequestBuilder bulk, Map<String, Object> data) {
 		String replogTick = (String) data.get(REPLOG_FIELD_TICK);
@@ -225,29 +163,4 @@ public class Indexer implements Runnable, Closeable {
 		return replogTick;
 	}
 
-	private void updateLastTick(final String namespace, final String tick, final BulkRequestBuilder bulk) {
-		try {
-			XContentBuilder json = jsonBuilder() //
-				.startObject() //
-				.startObject(RIVER_TYPE) //
-				.field(LAST_TICK_FIELD, tick) //
-				.endObject() //
-				.endObject();
-
-			IndexRequest req = indexRequest(riverIndexName) //
-				.type(riverName.getName()) //
-				.id(namespace) //
-				.source(json);
-
-			bulk.add(req);
-		}
-		catch (IOException e) {
-			logger.error("error updating last Tick for collection {}", namespace);
-		}
-	}
-
-	@Override
-	public void close() {
-		keepRunning = false;
-	}
 }

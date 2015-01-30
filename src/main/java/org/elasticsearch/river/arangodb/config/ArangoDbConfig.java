@@ -20,6 +20,7 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.RiverIndexName;
 import org.elasticsearch.river.RiverName;
+import org.elasticsearch.river.arangodb.EventStream;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptService.ScriptType;
@@ -30,7 +31,7 @@ public class ArangoDbConfig {
 
 	private final String riverIndexName;
 	private final String riverName;
-	private final BlockingQueue<WalEvent> eventStream;
+	private final EventStream eventStream;
 	private final String arangodbHost;
 	private final int arangodbPort;
 	private final String arangodbDatabase;
@@ -90,12 +91,14 @@ public class ArangoDbConfig {
 		indexBulkTimeout = positive(rsw.getTimeValue("index.bulk_timeout", timeValueMillis(10)).millis());
 
 		// event stream from producer to consumer
+		BlockingQueue<WalEvent> queue = null;
 		if (indexThrottleSize == -1) {
-			eventStream = new LinkedTransferQueue<WalEvent>();
+			queue = new LinkedTransferQueue<WalEvent>();
 		}
 		else {
-			eventStream = new ArrayBlockingQueue<WalEvent>(indexThrottleSize);
+			queue = new ArrayBlockingQueue<WalEvent>(indexThrottleSize);
 		}
+		eventStream = new EventStream(queue, indexBulkTimeout, indexBulkTimeout);
 	}
 
 	public String getRiverIndexName() {
@@ -106,7 +109,7 @@ public class ArangoDbConfig {
 		return riverName;
 	}
 
-	public BlockingQueue<WalEvent> getEventStream() {
+	public EventStream getEventStream() {
 		return eventStream;
 	}
 

@@ -22,11 +22,13 @@ import org.elasticsearch.river.arangodb.wal.StateMachine;
 public class CollectionCheck extends BaseState {
 
 	private final WalClient client;
+	private final String collectionName;
 
 	@Inject
 	public CollectionCheck(StateMachine stateMachine, ArangoDbConfig config, WalClient client) {
 		super(stateMachine, config, COLLECTION_CHECK);
 		this.client = client;
+		collectionName = config.getArangodbCollection();
 	}
 
 	@Override
@@ -78,11 +80,10 @@ public class CollectionCheck extends BaseState {
 	}
 
 	private boolean findCollection(Inventory inventory) {
-		String name = config.getArangodbCollection();
 		for (ArangoDbCollection collection : inventory.getCollections()) {
 			CollectionParameters params = collection.getParameters();
 			String collName = params.getName();
-			if (name.equals(collName)) {
+			if (collectionName.equals(collName)) {
 				return true;
 			}
 		}
