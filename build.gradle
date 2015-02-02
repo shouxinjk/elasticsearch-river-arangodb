@@ -6,6 +6,9 @@ buildscript {
 		mavenCentral()
 		jcenter()
 	}
+	dependencies {
+		classpath 'net.swisstech:swissarmyknife:+'
+	}
 }
 
 // plugins
@@ -121,8 +124,10 @@ test {
 }
 
 // setup for integration tests, requires a local installation of arangodb
-ext.arangoDbPort  = 18529
-ext.arangoDataDir = "/tmp/arangodb_wal_client_tests_${System.currentTimeMillis()}"
+ext.arangoDbPort         = 18529
+ext.arangoDataDir        = "/tmp/river_arangodb${System.currentTimeMillis()}"
+ext.elasticsearchPort    = 19200
+ext.elasticsearchDataDir = "/tmp/river_elasticsearch${System.currentTimeMillis()}"
 
 task('intTest', type: Test, dependsOn: 'intTestClasses') {
 	useTestNG()
@@ -131,7 +136,8 @@ task('intTest', type: Test, dependsOn: 'intTestClasses') {
 	testSrcDirs    = sourceSets.intTest.java.srcDirs as List
 	testClassesDir = sourceSets.intTest.output.classesDir
 	classpath      = sourceSets.intTest.runtimeClasspath
-	systemProperty 'ARANGODB_PORT', project.arangoDbPort
+	systemProperty 'ARANGODB_PORT'     , project.arangoDbPort
+	systemProperty 'ELASTICSEARCH_PORT', project.elasticsearchPort
 
 	jacoco {
 		destinationFile = file("${buildDir}/jacoco.it.exec")
@@ -165,6 +171,20 @@ afterEvaluate {
 	task('stopArangoDb') << {
 		project.arangodb_process.shutdown()
 		project.delete(project.arangoDataDir)
+	}
+
+	task('startElasticSearch') << {
+		new File(project.elasticsearchDataDir + "/log").mkdirs()
+		new File(project.elasticsearchDataDir + "/data").mkdirs()
+		new File(project.elasticsearchDataDir + "/work").mkdirs()
+		project.ext.arangodb_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
+			.launch([
+				'/usr/share/elasticsearch/bin/elasticsearch',
+				'--server.endpoint'   , "tcp://127.0.0.1:${project.arangoDbPort}",
+				'--database.directory', "${project.arangoDataDir}/data",
+				'--log.file'          , '+'
+			], null)
+			.waitForOpenPorts([ project.arangoDbPort ], 10000)
 	}
 
 	tasks.intTest.dependsOn('startArangoDb')
