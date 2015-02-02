@@ -177,7 +177,7 @@ afterEvaluate {
 		new File(project.elasticsearchDataDir + "/log").mkdirs()
 		new File(project.elasticsearchDataDir + "/data").mkdirs()
 		new File(project.elasticsearchDataDir + "/work").mkdirs()
-		project.ext.arangodb_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
+		project.ext.elasticsearch_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
 			.launch([
 				'/usr/share/elasticsearch/bin/elasticsearch',
 				'--server.endpoint'   , "tcp://127.0.0.1:${project.arangoDbPort}",
@@ -185,6 +185,11 @@ afterEvaluate {
 				'--log.file'          , '+'
 			], null)
 			.waitForOpenPorts([ project.arangoDbPort ], 10000)
+	}
+
+	task('stopElasticSearch') << {
+		project.elasticsearch_process.shutdown()
+		project.delete(project.elasticsearchDataDir)
 	}
 
 	tasks.intTest.dependsOn('startArangoDb')
