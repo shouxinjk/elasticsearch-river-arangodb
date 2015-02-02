@@ -32,7 +32,7 @@ public abstract class AbstractUserScript implements UserScript {
 			vars.put("operation", "DELETE");
 		}
 		else {
-			vars.put("operation", "UNKNOWN");
+			vars.put("operation", "SKIP");
 		}
 
 		return vars;
