@@ -65,7 +65,7 @@ public class Enqueue extends BaseState {
 			}
 			catch (InterruptedException e) {
 				String key = event.getKey();
-				String tick = event.getTick();
+				long tick = event.getTick();
 				LOG.warn("Event key: " + key + " tick:" + tick + " could not be added to stream");
 			}
 		}
