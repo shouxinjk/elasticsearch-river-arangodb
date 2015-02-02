@@ -2,6 +2,7 @@ package org.elasticsearch.river.arangodb.es;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Map;
 
 import net.swisstech.arangodb.model.wal.WalEvent;
 
@@ -10,6 +11,7 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.arangodb.EventStream;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
+import org.elasticsearch.river.arangodb.es.script.UserScript;
 import org.elasticsearch.river.arangodb.es.tick.Tick;
 
 @Singleton
@@ -18,15 +20,18 @@ public class IndexWriterRunnable implements Runnable, Closeable {
 	private final EventStream stream;
 	private final int indexBulkSize;
 	private final EsBulk bulk;
+	private final UserScript userScript;
+	private final ScriptResultProcessor processor;
 
 	private boolean keepRunning = true;
 
-
 	@Inject
-	public IndexWriterRunnable(ArangoDbConfig config, EsBulk bulk) {
+	public IndexWriterRunnable(ArangoDbConfig config, EsBulk bulk, UserScript userScript, ScriptResultProcessor processor) {
 		indexBulkSize = config.getIndexBulkSize();
 		stream = config.getEventStream();
 		this.bulk = bulk;
+		this.userScript = userScript;
+		this.processor = processor;
 	}
 
 	@Override
@@ -40,7 +45,15 @@ public class IndexWriterRunnable implements Runnable, Closeable {
 			// read from the WAL's event stream and add them to the bulk request
 			// up to the maximum configured request size
 			while ((event = nextEvent()) != null) {
-				lastTickReceived = bulk.add(event);
+				lastTickReceived = event.getTick();
+
+				// the user supplied script allows to optionally override behaviour
+				// of the indexer or even the data to be indexed.
+				Map<String, Object> ctx = userScript.executeScript(event);
+
+				// check the ctx object and add to the bulk request if still
+				// requested after the script has run.
+				processor.process(ctx, bulk);
 
 				// request is large enough, submit now
 				if (bulk.size() > indexBulkSize) {
