@@ -18,7 +18,7 @@ import org.elasticsearch.river.River;
 import org.elasticsearch.river.RiverName;
 import org.elasticsearch.river.RiverSettings;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
-import org.elasticsearch.river.arangodb.es.Indexer;
+import org.elasticsearch.river.arangodb.es.IndexWriterRunnable;
 import org.elasticsearch.river.arangodb.wal.WalReaderRunnable;
 import org.elasticsearch.script.ScriptService;
 
@@ -27,12 +27,12 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 	private final Client client;
 	private final ArangoDbConfig config;
 	private final WalReaderRunnable walReaderRunnable;
-	private final Indexer indexer;
+	private final IndexWriterRunnable indexWriterRunnable;
 	private final ThreadFactory walReaderThreadFactory;
-	private final ThreadFactory indexerThreadFactory;
+	private final ThreadFactory indexWriterThreadFactory;
 
 	private Thread walReaderThread;
-	private Thread indexerThread;
+	private Thread indexWriterThread;
 
 	@Inject
 	public ArangoDbRiver( //
@@ -42,9 +42,9 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 		final ScriptService scriptService, //
 		final ArangoDbConfig config, //
 		final WalReaderRunnable walReaderRunnable, //
-		final Indexer indexer, //
-		@Named("arangodb_river_walReaderRunnable_threadfactory") final ThreadFactory walReaderRunnableThreadFactory, //
-		@Named("arangodb_river_indexer_threadfactory") final ThreadFactory indexerThreadFactory //
+		final IndexWriterRunnable indexWriterRunnable, //
+		@Named("arangodb_river_walReaderRunnable_threadfactory") final ThreadFactory walReaderThreadFactory, //
+		@Named("arangodb_river_indexWriterRunnable_threadfactory") final ThreadFactory indexWriterThreadFactory //
 	) throws ArangoDbException {
 
 		super(riverName, settings);
@@ -52,9 +52,9 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 		this.client = client;
 		this.config = config;
 		this.walReaderRunnable = walReaderRunnable;
-		this.indexer = indexer;
-		walReaderThreadFactory = walReaderRunnableThreadFactory;
-		this.indexerThreadFactory = indexerThreadFactory;
+		this.indexWriterRunnable = indexWriterRunnable;
+		this.walReaderThreadFactory = walReaderThreadFactory;
+		this.indexWriterThreadFactory = indexWriterThreadFactory;
 
 		logger.debug("Prefix: [{}] - name: [{}]", logger.getPrefix(), logger.getName());
 		logger.debug("River settings: [{}]", settings.settings());
@@ -92,8 +92,8 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 		walReaderThread = walReaderThreadFactory.newThread(walReaderRunnable);
 		walReaderThread.start();
 
-		indexerThread = indexerThreadFactory.newThread(indexer);
-		indexerThread.start();
+		indexWriterThread = indexWriterThreadFactory.newThread(indexWriterRunnable);
+		indexWriterThread.start();
 
 		logger.info("started arangodb river");
 	}
@@ -103,11 +103,11 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 		logger.info("closing arangodb stream river");
 
 		Closeables.close(walReaderRunnable);
-		Closeables.close(indexer);
+		Closeables.close(indexWriterRunnable);
 
 		sleepFor(100);
 
 		interruptAndJoin(walReaderThread, 50);
-		interruptAndJoin(indexerThread, 50);
+		interruptAndJoin(indexWriterThread, 50);
 	}
 }
