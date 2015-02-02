@@ -19,7 +19,6 @@ plugins {
 	id 'maven-publish'
 	id 'project-report'
 	id 'net.swisstech.eclipseenhancer'   version '1.0.0'
-	id 'com.github.johnrengelman.shadow' version '1.2.1'
 }
 
 // re-use repositories from buildscript
@@ -34,13 +33,27 @@ description = 'ElasticSearch River plugin for ArangoDB'
 group       = 'com.github.triagens.elasticsearch'
 version     = '0.4.0-SNAPSHOT'
 
+// extra configuration for integration tests
+configurations {
+	provided
+	intTestCompile
+}
+
+sourceSets {
+	main {
+		compileClasspath += configurations.provided
+	}
+	intTest {
+		compileClasspath = sourceSets.main.output + configurations.testRuntime
+		runtimeClasspath = sourceSets.main.output + configurations.testRuntime + output
+	}
+}
+
 // project dependencies
 ext.versions = [
 	  elasticsearch      : '1.4.2'
 	, arangodb_wal_client: '1.1.4'
-	, httpcomponents     : '4.3.6'
 	, jackson            : '1.9.13'
-	, json               : '20140107'
 	, swissarmyknife     : '1.2.0'
 	, logback_classic    : '1.1.2'
 	, testng             : '6.8.17'
@@ -48,19 +61,15 @@ ext.versions = [
 ]
 
 dependencies {
-	// Core dependencies
-	compile "org.elasticsearch:elasticsearch:${versions.elasticsearch}"
-	compile "org.apache.httpcomponents:httpclient:${versions.httpcomponents}"
-	compile "org.json:json:${versions.json}"
+	// provided dependencies
+	provided "org.elasticsearch:elasticsearch:${versions.elasticsearch}"
+
+	// bundled dependencies
 	compile "org.codehaus.jackson:jackson-mapper-asl:${versions.jackson}"
-
-	// see: https://github.com/stackmagic/arangodb-wal-client
 	compile "net.swisstech:arangodb-wal-client:${versions.arangodb_wal_client}"
-
-	// see: https://github.com/stackmagic/swissarmyknife
 	compile "net.swisstech:swissarmyknife:${versions.swissarmyknife}"
 
-	// Tests
+	// test dependencies
 	testCompile "ch.qos.logback:logback-classic:${versions.logback_classic}"
 	testCompile "org.testng:testng:${versions.testng}"
 	testCompile "org.mockito:mockito-all:${versions.mockito}"
@@ -75,14 +84,15 @@ task wrapper(type: Wrapper) {
 	gradleVersion = '2.2.1'
 }
 
-// config to build fat jar
-shadowJar {
-	mergeServiceFiles()
-	dependencies {
-		exclude(dependency("org.spatial4j:.*:.*"))
-		exclude(dependency("org.apache.lucene:.*:.*"))
-		exclude(dependency("org.elasticsearch:.*:.*"))
-	}
+// create distribution zip
+task copy(type: Copy) {
+	destinationDir = file("${buildDir}/distlibs")
+	from configurations.runtime
+	from jar
+}
+
+task dist(type: Zip) {
+	from copy
 }
 
 // source-code jar
@@ -99,18 +109,6 @@ publishing {
 				classifier 'sources'
 			}
 		}
-	}
-}
-
-// extra configuration for integration tests
-configurations {
-	intTestCompile
-}
-
-sourceSets {
-	intTest {
-		compileClasspath = sourceSets.main.output + configurations.testRuntime
-		runtimeClasspath = sourceSets.main.output + configurations.testRuntime + output
 	}
 }
 
@@ -173,13 +171,18 @@ afterEvaluate {
 		project.delete(project.arangoDataDir)
 	}
 
-	task('startElasticSearch', dependsOn: shadowJar) << {
-		def pluginDir = project.elasticsearchDataDir + "/work"
+	task('startElasticSearch', dependsOn: dist) << {
+		def pluginDir = project.elasticsearchDataDir + "/plugin"
 		def confDir   = project.elasticsearchDataDir + "/conf"
 		def logDir    = project.elasticsearchDataDir + "/log"
 		def dataDir   = project.elasticsearchDataDir + "/data"
 		def workDir   = project.elasticsearchDataDir + "/work"
 		[ pluginDir, confDir, logDir, dataDir, workDir ].each { new File(it).mkdirs() }
+
+		copy {
+			from tasks['copy'].destinationDir
+			into "${pluginDir}/arangodb"
+		}
 
 		project.ext.elasticsearch_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
 			.launch([
@@ -194,8 +197,29 @@ afterEvaluate {
 				'--path.work'    , "${workDir}"
 			], null)
 			.waitForOpenPorts([ project.elasticsearchPort ], 15000)
+		println ">>> elasticsearch ready for operation"
 
-		[ '/usr/share/elasticsearch/bin/plugin', '--url', "file://${tasks['shadowJar'].archivePath}" ].execute()
+		def found = false
+		for (int i = 0; i < 10; i++) {
+			def data = new groovy.json.JsonSlurper().parse(new URL("http://localhost:${project.elasticsearchPort}/_nodes"))
+			for (node in data.nodes.values()) {
+				for (plugin in node.plugins) {
+					if ("river-arangodb".equals(plugin.name)) {
+						found = true
+						break
+					}
+				}
+				if (found) { break; }
+			}
+			if (found) { break; }
+			Thread.sleep(1000)
+		}
+
+		if (!found) {
+			throw new GradleException("plugin not found in node state")
+		}
+
+		println ">>> plugin found and installed"
 	}
 
 	task('stopElasticSearch') << {
