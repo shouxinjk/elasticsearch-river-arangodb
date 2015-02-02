@@ -37,10 +37,9 @@ public class Ticks {
 		}
 		try {
 			String json = MAPPER.writeValueAsString(tick);
-			return client //
-				.prepareIndex(index, type, id) //
-				.setSource(json) //
-				.request();
+			IndexRequest req = new IndexRequest(index, type, id);
+			req.source(json);
+			return req;
 		}
 		catch (IOException e) {
 			return null;
