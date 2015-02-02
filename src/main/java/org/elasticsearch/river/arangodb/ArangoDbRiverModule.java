@@ -14,6 +14,12 @@ import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.river.River;
 import org.elasticsearch.river.RiverSettings;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
+import org.elasticsearch.river.arangodb.es.script.ConcreteUserScript;
+import org.elasticsearch.river.arangodb.es.script.NullUserScript;
+import org.elasticsearch.river.arangodb.es.script.UserScript;
+import org.elasticsearch.script.CompiledScript;
+import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.script.ScriptService.ScriptType;
 
 public class ArangoDbRiverModule extends AbstractModule {
 
@@ -39,6 +45,23 @@ public class ArangoDbRiverModule extends AbstractModule {
 		else {
 			return new WalClient(baseUrl, user, pass);
 		}
+	}
+
+	@Provides
+	@Singleton
+	public UserScript provideUserScript(ArangoDbConfig config, ScriptService scriptService) {
+		String scriptString = config.getArangodbScript();
+		if (isBlank(scriptString)) {
+			return new NullUserScript();
+		}
+
+		String scriptType = config.getArangodbScripttype();
+		if (isBlank(scriptType)) {
+			return new NullUserScript();
+		}
+
+		CompiledScript compiled = scriptService.compile(scriptType, scriptString, ScriptType.INLINE);
+		return new ConcreteUserScript(scriptService, compiled);
 	}
 
 	@Provides

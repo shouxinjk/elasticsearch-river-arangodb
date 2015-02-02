@@ -20,9 +20,7 @@ import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.RiverIndexName;
 import org.elasticsearch.river.RiverName;
 import org.elasticsearch.river.arangodb.EventStream;
-import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.ScriptService;
-import org.elasticsearch.script.ScriptService.ScriptType;
 
 /** config object and holder of shared objects */
 @Singleton
@@ -35,7 +33,8 @@ public class ArangoDbConfig {
 	private final int arangodbPort;
 	private final String arangodbDatabase;
 	private final String arangodbCollection;
-	private final CompiledScript arangodbScript;
+	private final String arangodbScript;
+	private final String arangodbScripttype;
 	private final boolean arangodbDropcollection;
 	private final long arangodbReaderMinSleep;
 	private final long arangodbReaderMaxSleep;
@@ -65,9 +64,8 @@ public class ArangoDbConfig {
 		arangodbDatabase = notBlank(rsw.getString("arangodb.db", riverName));
 		arangodbCollection = notBlank(rsw.getString("arangodb.collection", riverName));
 
-		String scriptString = rsw.getString("arangodb.script", null);
-		String scriptLang = notBlank(rsw.getString("arangodb.scriptType", "js"));
-		arangodbScript = scriptService.compile(scriptLang, scriptString, ScriptType.INLINE);
+		arangodbScript = rsw.getString("arangodb.script", null);
+		arangodbScripttype = notBlank(rsw.getString("arangodb.script_type", "js"));
 
 		// arangodb.options
 		arangodbDropcollection = rsw.getBool("arangodb.drop_collection", true);
@@ -128,8 +126,12 @@ public class ArangoDbConfig {
 		return arangodbCollection;
 	}
 
-	public CompiledScript getArangodbScript() {
+	public String getArangodbScript() {
 		return arangodbScript;
+	}
+
+	public String getArangodbScripttype() {
+		return arangodbScripttype;
 	}
 
 	public boolean getArangodbDropcollection() {
