@@ -11,6 +11,7 @@ buildscript {
 // plugins
 plugins {
 	id 'java'
+	id 'jacoco'
 	id 'eclipse'
 	id 'maven-publish'
 	id 'project-report'
@@ -96,4 +97,76 @@ publishing {
 			}
 		}
 	}
+}
+
+// extra configuration for integration tests
+configurations {
+	intTestCompile
+}
+
+sourceSets {
+	intTest {
+		compileClasspath = sourceSets.main.output + configurations.testRuntime
+		runtimeClasspath = sourceSets.main.output + configurations.testRuntime + output
+	}
+}
+
+// normal unit tests
+test {
+	useTestNG()
+
+	jacoco {
+		destinationFile = file("${buildDir}/jacoco.ut.exec")
+	}
+}
+
+// setup for integration tests, requires a local installation of arangodb
+ext.arangoDbPort  = 18529
+ext.arangoDataDir = "/tmp/arangodb_wal_client_tests_${System.currentTimeMillis()}"
+
+task('intTest', type: Test, dependsOn: 'intTestClasses') {
+	useTestNG()
+	testLogging.showStandardStreams = true
+	group          = 'verification'
+	testSrcDirs    = sourceSets.intTest.java.srcDirs as List
+	testClassesDir = sourceSets.intTest.output.classesDir
+	classpath      = sourceSets.intTest.runtimeClasspath
+	systemProperty 'ARANGODB_PORT', project.arangoDbPort
+
+	jacoco {
+		destinationFile = file("${buildDir}/jacoco.it.exec")
+	}
+}
+
+jacocoTestReport {
+	reports.html.destination = "${reportsDir}/jacoco/${name}"
+}
+task('jacocoIntTestReport', type: JacocoReport) {
+	reports.html.destination = "${reportsDir}/jacoco/${name}"
+	executionData intTest
+	sourceSets sourceSets.main
+}
+
+// start & stop arangodb
+afterEvaluate {
+
+	task('startArangoDb') << {
+		new File(project.arangoDataDir + "/data").mkdirs()
+		project.ext.arangodb_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
+			.launch([
+				'/usr/sbin/arangod',
+				'--server.endpoint'   , "tcp://127.0.0.1:${project.arangoDbPort}",
+				'--database.directory', "${project.arangoDataDir}/data",
+				'--log.file'          , '+'
+			], null)
+			.waitForOpenPorts([ project.arangoDbPort ], 10000)
+	}
+
+	task('stopArangoDb') << {
+		project.arangodb_process.shutdown()
+		project.delete(project.arangoDataDir)
+	}
+
+	tasks.intTest.dependsOn('startArangoDb')
+	tasks.intTest.finalizedBy('stopArangoDb')
 }
