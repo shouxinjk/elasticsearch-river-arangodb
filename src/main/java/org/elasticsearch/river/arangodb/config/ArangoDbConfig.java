@@ -6,7 +6,6 @@ import static net.swisstech.swissarmyknife.lang.Longs.positive;
 import static net.swisstech.swissarmyknife.lang.Strings.notBlank;
 import static net.swisstech.swissarmyknife.net.TCP.validPortNumber;
 import static net.swisstech.swissarmyknife.util.Sets.newHashSet;
-import static org.elasticsearch.common.collect.Maps.newHashMap;
 import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
 
 import java.util.Set;
@@ -21,7 +20,7 @@ import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.RiverIndexName;
 import org.elasticsearch.river.RiverName;
 import org.elasticsearch.river.arangodb.EventStream;
-import org.elasticsearch.script.ExecutableScript;
+import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
@@ -36,7 +35,7 @@ public class ArangoDbConfig {
 	private final int arangodbPort;
 	private final String arangodbDatabase;
 	private final String arangodbCollection;
-	private final ExecutableScript arangodbScript;
+	private final CompiledScript arangodbScript;
 	private final boolean arangodbDropcollection;
 	private final long arangodbReaderMinSleep;
 	private final long arangodbReaderMaxSleep;
@@ -68,7 +67,7 @@ public class ArangoDbConfig {
 
 		String scriptString = rsw.getString("arangodb.script", null);
 		String scriptLang = notBlank(rsw.getString("arangodb.scriptType", "js"));
-		arangodbScript = scriptService.executable(scriptLang, scriptString, ScriptType.INLINE, newHashMap());
+		arangodbScript = scriptService.compile(scriptLang, scriptString, ScriptType.INLINE);
 
 		// arangodb.options
 		arangodbDropcollection = rsw.getBool("arangodb.drop_collection", true);
@@ -129,7 +128,7 @@ public class ArangoDbConfig {
 		return arangodbCollection;
 	}
 
-	public ExecutableScript getArangodbScript() {
+	public CompiledScript getArangodbScript() {
 		return arangodbScript;
 	}
 
