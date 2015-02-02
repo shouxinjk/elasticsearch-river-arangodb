@@ -16,7 +16,7 @@ before_script:
   - echo 'deb http://packages.elasticsearch.org/elasticsearch/1.4/debian stable main' | sudo tee -a /etc/apt/sources.list
   - sudo apt-get -q update
   - sudo apt-get -q install arangodb
-  - sudo apt-get -q reinstall
+  - sudo apt-get -q install elasticsearch
   - sudo service arangodb stop
   - sudo service elasticsearch stop
 
