@@ -173,24 +173,38 @@ afterEvaluate {
 		project.delete(project.arangoDataDir)
 	}
 
-	task('startElasticSearch') << {
-		new File(project.elasticsearchDataDir + "/log").mkdirs()
-		new File(project.elasticsearchDataDir + "/data").mkdirs()
-		new File(project.elasticsearchDataDir + "/work").mkdirs()
+	task('startElasticSearch', dependsOn: shadowJar) << {
+		def pluginDir = project.elasticsearchDataDir + "/work"
+		def confDir   = project.elasticsearchDataDir + "/conf"
+		def logDir    = project.elasticsearchDataDir + "/log"
+		def dataDir   = project.elasticsearchDataDir + "/data"
+		def workDir   = project.elasticsearchDataDir + "/work"
+		[ pluginDir, confDir, logDir, dataDir, workDir ].each { new File(it).mkdirs() }
+
 		project.ext.elasticsearch_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
 			.launch([
 				'/usr/share/elasticsearch/bin/elasticsearch',
-				'--server.endpoint'   , "tcp://127.0.0.1:${project.arangoDbPort}",
-				'--database.directory', "${project.arangoDataDir}/data",
-				'--log.file'          , '+'
+				'--cluster.name' , 'intTestCluster',
+				'--node.name'    , 'intTestName',
+				'--http.port'    , "${project.elasticsearchPort}",
+				'--path.plugins' , "${pluginDir}",
+				'--path.conf'    , "${confDir}",
+				'--path.logs'    , "${logDir}",
+				'--path.data'    , "${dataDir}",
+				'--path.work'    , "${workDir}"
 			], null)
-			.waitForOpenPorts([ project.arangoDbPort ], 10000)
+			.waitForOpenPorts([ project.elasticsearchPort ], 15000)
+
+		[ '/usr/share/elasticsearch/bin/plugin', '--url', "file://${tasks['shadowJar'].archivePath}" ].execute()
 	}
 
 	task('stopElasticSearch') << {
 		project.elasticsearch_process.shutdown()
 		project.delete(project.elasticsearchDataDir)
 	}
+
+	tasks.intTest.dependsOn('startElasticSearch')
+	tasks.intTest.finalizedBy('stopElasticSearch')
 
 	tasks.intTest.dependsOn('startArangoDb')
 	tasks.intTest.finalizedBy('stopArangoDb')
