@@ -24,13 +24,12 @@ public abstract class AbstractUserScript implements UserScript {
 		WalEventType type = event.getType();
 		vars.put("opid", type.getId());
 		vars.put("opname", type.name());
+
 		if (type == WalEventType.REPLICATION_MARKER_DOCUMENT || type == WalEventType.REPLICATION_MARKER_EDGE) {
 			vars.put("operation", "UPDATE");
-
 		}
 		else if (type == WalEventType.REPLICATION_MARKER_REMOVE) {
 			vars.put("operation", "DELETE");
-
 		}
 		else {
 			vars.put("operation", "UNKNOWN");
