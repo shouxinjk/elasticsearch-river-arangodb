@@ -75,6 +75,8 @@ dependencies {
 	testCompile "org.mockito:mockito-all:${versions.mockito}"
 }
 
+eclipse.classpath.plusConfigurations += [ configurations.provided ]
+
 test {
 	useTestNG()
 }
