@@ -2,6 +2,7 @@ package org.elasticsearch.river.arangodb;
 
 import static net.swisstech.swissarmyknife.io.Closeables.close;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import net.swisstech.arangodb.MgmtClient;
+import net.swisstech.arangodb.MgmtClient.CreateCollectionResponse;
 
 import org.apache.commons.io.FileUtils;
 import org.codehaus.jackson.JsonNode;
@@ -118,6 +120,12 @@ public class TestMain {
 		System.out.println(">>> START RIVER");
 		System.out.println(">>>");
 
+		createCollection();
+
+		System.out.println(">>>");
+		System.out.println(">>> START RIVER");
+		System.out.println(">>>");
+
 		startRiver();
 
 		System.out.println(">>>");
@@ -153,6 +161,15 @@ public class TestMain {
 		FileUtils.forceDelete(baseDir.toFile());
 	}
 
+	private void createCollection() throws IOException {
+		MgmtClient mc = new MgmtClient("http://localhost:8529/_db/_system");
+		CreateCollectionResponse ccrsp = mc.createCollection("test");
+		int code = ccrsp.getCode();
+		if (code != 200 && code != 409) {
+			fail("creating collection in arangodb failed: " + new ObjectMapper().writeValueAsString(ccrsp));
+		}
+	}
+
 	private void startRiver() throws IOException {
 
 		Arangodb arangodb = new Arangodb();
@@ -176,9 +193,6 @@ public class TestMain {
 		Meta meta = new Meta();
 		meta.setArangodb(arangodb);
 		meta.setIndex(index);
-
-		MgmtClient mc = new MgmtClient("http://" + arangodb.getHost() + ":" + arangodb.getPort() + "/_db/" + arangodb.getDb());
-		mc.createCollection(arangodb.getCollection());
 
 		String json = new ObjectMapper().writeValueAsString(meta);
 

@@ -52,7 +52,7 @@ sourceSets {
 // project dependencies
 ext.versions = [
 	  elasticsearch      : '1.4.2'
-	, arangodb_wal_client: '1.1.4'
+	, arangodb_wal_client: '1.1.5'
 	, jackson            : '1.9.13'
 	, swissarmyknife     : '1.2.0'
 	, logback_classic    : '1.1.2'
