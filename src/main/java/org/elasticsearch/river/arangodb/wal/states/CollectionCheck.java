@@ -14,12 +14,16 @@ import net.swisstech.arangodb.model.Inventory;
 
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 import org.elasticsearch.river.arangodb.wal.BaseState;
 import org.elasticsearch.river.arangodb.wal.StateMachine;
 
 @Singleton
 public class CollectionCheck extends BaseState {
+
+	private static final ESLogger LOG = ESLoggerFactory.getLogger(CollectionCheck.class.getName());
 
 	private final WalClient client;
 	private final String collectionName;
@@ -45,6 +49,7 @@ public class CollectionCheck extends BaseState {
 			inventory = client.inventory();
 		}
 		catch (IOException e) {
+			LOG.warn("Error getting inventory", e);
 			// this is bad! maybe just a temporary network error?
 		}
 
@@ -59,6 +64,8 @@ public class CollectionCheck extends BaseState {
 		ReadWal readWal = (ReadWal) stateMachine.get(READ_WAL);
 
 		if (found) {
+			LOG.info("Collection {} found", collectionName);
+
 			sleep.resetErrorCount();
 
 			// remove self
@@ -69,6 +76,8 @@ public class CollectionCheck extends BaseState {
 			stateMachine.push(readWal);
 		}
 		else {
+			LOG.info("Collection {} not found", collectionName);
+
 			sleep.increaseErrorCount();
 			stateMachine.push(sleep);
 		}

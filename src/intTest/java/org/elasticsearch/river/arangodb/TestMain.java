@@ -1,6 +1,7 @@
 package org.elasticsearch.river.arangodb;
 
 import static net.swisstech.swissarmyknife.io.Closeables.close;
+import static org.elasticsearch.river.arangodb.util.JacksonUtil.MAPPER;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
@@ -17,8 +18,6 @@ import net.swisstech.arangodb.MgmtClient;
 import net.swisstech.arangodb.MgmtClient.CreateCollectionResponse;
 
 import org.apache.commons.io.FileUtils;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
@@ -29,6 +28,7 @@ import org.elasticsearch.river.arangodb.client.Arangodb;
 import org.elasticsearch.river.arangodb.client.Index;
 import org.elasticsearch.river.arangodb.client.Meta;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -166,7 +166,7 @@ public class TestMain {
 		CreateCollectionResponse ccrsp = mc.createCollection("test");
 		int code = ccrsp.getCode();
 		if (code != 200 && code != 409) {
-			fail("creating collection in arangodb failed: " + new ObjectMapper().writeValueAsString(ccrsp));
+			fail("creating collection in arangodb failed: " + MAPPER.writeValueAsString(ccrsp));
 		}
 	}
 
@@ -180,7 +180,7 @@ public class TestMain {
 		arangodb.setExcludeFields(new ArrayList<String>());
 		arangodb.setHost("localhost");
 		arangodb.setPort(8529);
-		arangodb.setReaderMaxSleep("500ms");
+		arangodb.setReaderMaxSleep("5000ms");
 		arangodb.setReaderMinSleep("100ms");
 		arangodb.setScript(null);
 
@@ -194,7 +194,7 @@ public class TestMain {
 		meta.setArangodb(arangodb);
 		meta.setIndex(index);
 
-		String json = new ObjectMapper().writeValueAsString(meta);
+		String json = MAPPER.writeValueAsString(meta);
 
 		System.out.println("###");
 		System.out.println("### REQ: " + json);
@@ -215,10 +215,10 @@ public class TestMain {
 		Request req = new Request.Builder().url("http://localhost:" + HTTP_PORT + "/_nodes").get().build();
 		Response rsp = new OkHttpClient().newCall(req).execute();
 		InputStream in = rsp.body().byteStream();
-		JsonNode root = new ObjectMapper().readValue(in, JsonNode.class);
+		JsonNode root = MAPPER.readValue(in, JsonNode.class);
 
 		JsonNode nodes = root.get("nodes");
-		String nodeName = nodes.getFieldNames().next();
+		String nodeName = nodes.fieldNames().next();
 		JsonNode thisNode = nodes.get(nodeName);
 		JsonNode plugins = thisNode.get("plugins");
 		assertEquals(plugins.size(), 1);

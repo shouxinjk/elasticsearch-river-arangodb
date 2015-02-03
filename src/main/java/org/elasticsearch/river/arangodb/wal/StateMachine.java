@@ -3,11 +3,18 @@ package org.elasticsearch.river.arangodb.wal;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.swisstech.arangodb.WalClient;
 import net.swisstech.swissarmyknife.util.Stack;
 
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
+import org.elasticsearch.river.arangodb.wal.states.CollectionCheck;
+import org.elasticsearch.river.arangodb.wal.states.CollectionMissing;
+import org.elasticsearch.river.arangodb.wal.states.DropCollection;
+import org.elasticsearch.river.arangodb.wal.states.Enqueue;
+import org.elasticsearch.river.arangodb.wal.states.ReadWal;
+import org.elasticsearch.river.arangodb.wal.states.Sleep;
 
 @Singleton
 public class StateMachine {
@@ -18,8 +25,19 @@ public class StateMachine {
 	private final ArangoDbConfig config;
 
 	@Inject
-	public StateMachine(ArangoDbConfig config) {
+	public StateMachine(ArangoDbConfig config, WalClient client) {
 		this.config = config;
+
+		// initialize all states
+		// TODO still need a cleaner solution for this state to statemachine and back circular dependency
+		// should have them referenced from somewhere, preferrably as static fields but then we can't
+		// use guice's ctor injection
+		new CollectionCheck(this, config, client);
+		new CollectionMissing(this, config);
+		new DropCollection(this, config);
+		new Enqueue(this, config);
+		new ReadWal(this, config, client);
+		new Sleep(this, config);
 	}
 
 	public State peek() {

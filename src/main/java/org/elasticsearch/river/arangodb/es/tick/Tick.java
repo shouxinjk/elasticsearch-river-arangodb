@@ -17,4 +17,9 @@ public class Tick {
 	public void setTick(Long tick) {
 		this.tick = tick;
 	}
+
+	@Override
+	public String toString() {
+		return "Tick " + tick;
+	}
 }

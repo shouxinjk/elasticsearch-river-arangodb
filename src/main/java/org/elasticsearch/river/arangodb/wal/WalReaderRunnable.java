@@ -1,21 +1,22 @@
 package org.elasticsearch.river.arangodb.wal;
 
-import java.io.Closeable;
+import static org.elasticsearch.river.arangodb.wal.StateName.COLLECTION_CHECK;
 
-import net.swisstech.log.Logger;
-import net.swisstech.log.LoggerFactory;
+import java.io.Closeable;
 
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 
 @Singleton
 public class WalReaderRunnable implements Runnable, Closeable {
 
-	private static final Logger LOG = LoggerFactory.getLogger(WalReaderRunnable.class);
+	private static final ESLogger LOG = ESLoggerFactory.getLogger(WalReaderRunnable.class.getName());
 
 	private final StateMachine data;
 
-	private boolean keepRunning;
+	private boolean keepRunning = true;
 
 	@Inject
 	public WalReaderRunnable(StateMachine data) {
@@ -24,15 +25,26 @@ public class WalReaderRunnable implements Runnable, Closeable {
 
 	@Override
 	public void run() {
+		// initial state
+		data.push(COLLECTION_CHECK);
+
+		// run!
 		while (keepRunning) {
-			State state = data.peek();
-			if (state == null) {
-				LOG.info("next state is null, exiting");
-				break;
+			try {
+				State state = data.peek();
+				LOG.debug("Executing state {}", state);
+				if (state == null) {
+					LOG.warn("State is null, exiting");
+					break;
+				}
+				state.execute();
 			}
-			LOG.info("Executing state %s", state.getClass().getSimpleName());
-			state.execute();
+			catch (Exception e) {
+				LOG.warn("Exception", e);
+			}
 		}
+
+		LOG.info("Thread exiting");
 	}
 
 	@Override

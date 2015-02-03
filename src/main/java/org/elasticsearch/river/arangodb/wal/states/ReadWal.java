@@ -12,12 +12,16 @@ import net.swisstech.arangodb.model.wal.WalDump;
 
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 import org.elasticsearch.river.arangodb.wal.BaseState;
 import org.elasticsearch.river.arangodb.wal.StateMachine;
 
 @Singleton
 public class ReadWal extends BaseState {
+
+	private static final ESLogger LOG = ESLoggerFactory.getLogger(ReadWal.class.getName());
 
 	private final WalClient client;
 
@@ -55,11 +59,15 @@ public class ReadWal extends BaseState {
 		Enqueue enqueue = (Enqueue) stateMachine.get(ENQUEUE);
 
 		if (dump == null) {
+			LOG.warn("Dump returned is null!");
+
 			// this is bad! maybe just a temporary network error?
 			sleep.increaseErrorCount();
 			stateMachine.push(sleep);
 		}
 		else if (200 == code) {
+			LOG.info("Dump successful");
+
 			tick = dump.getHeaders().getReplicationLastincluded();
 			sleep.resetErrorCount();
 			enqueue.setData(dump);
@@ -67,7 +75,10 @@ public class ReadWal extends BaseState {
 			stateMachine.push(enqueue);
 		}
 		else if (204 == code) {
-			if (dump.getHeaders().getReplicationCheckmore()) {
+			boolean more = dump.getHeaders().getReplicationCheckmore();
+			LOG.info("Dump has no content, checkMore == {}", more);
+
+			if (more) {
 				// no op, go straight back to reading the WAL
 			}
 			else {
@@ -76,6 +87,8 @@ public class ReadWal extends BaseState {
 			}
 		}
 		else if (404 == code) {
+			LOG.warn("Collection missing/vanished");
+
 			tick = -1;
 			stateMachine.pop();
 			stateMachine.push(COLLECTION_MISSING);

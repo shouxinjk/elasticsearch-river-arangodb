@@ -73,7 +73,7 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 			);
 
 		try {
-			client.admin().indices().prepareCreate(config.getIndexName()).execute().actionGet();
+			client.admin().indices().prepareCreate(config.getIndexName()).get();
 		}
 		catch (Exception e) {
 			if (ExceptionsHelper.unwrapCause(e) instanceof IndexAlreadyExistsException) {

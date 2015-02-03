@@ -8,11 +8,15 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.river.arangodb.es.tick.Tick;
 import org.elasticsearch.river.arangodb.es.tick.Ticks;
 
 @Singleton
 public class EsBulk {
+
+	private static final ESLogger LOG = ESLoggerFactory.getLogger(EsBulk.class.getName());
 
 	private final Client client;
 	private final Ticks ticks;
@@ -42,8 +46,9 @@ public class EsBulk {
 	}
 
 	public BulkResponse executeBulk() {
+		LOG.info("Executing bulk request with {} requests", size());
 		BulkResponse resp = builder.get();
-		builder = null;
+		newBulkRequest();
 		return resp;
 	}
 

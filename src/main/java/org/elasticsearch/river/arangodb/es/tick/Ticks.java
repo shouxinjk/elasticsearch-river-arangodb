@@ -9,10 +9,14 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 
 @Singleton
 public class Ticks {
+
+	private static final ESLogger LOG = ESLoggerFactory.getLogger(Ticks.class.getName());
 
 	private final Client client;
 	private final String index;
@@ -32,6 +36,7 @@ public class Ticks {
 	 * tick to be accurate with what has been indexed
 	 */
 	public IndexRequest buildSaveReq(Tick tick) {
+		LOG.debug("Building Save Request for Tick {}", tick);
 		if (tick == null) {
 			return null;
 		}
@@ -48,6 +53,7 @@ public class Ticks {
 
 	/** get the last tick from ES */
 	public Tick getLastTick() {
+		LOG.debug("Fetching last tick");
 		GetResponse get = client //
 			.prepareGet(index, type, id) //
 			.get();
