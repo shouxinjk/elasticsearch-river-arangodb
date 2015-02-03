@@ -18,7 +18,7 @@ plugins {
 	id 'eclipse'
 	id 'maven-publish'
 	id 'project-report'
-	id 'net.swisstech.eclipseenhancer'   version '1.0.0'
+	id 'net.swisstech.eclipseenhancer' version '1.0.0'
 }
 
 // re-use repositories from buildscript
