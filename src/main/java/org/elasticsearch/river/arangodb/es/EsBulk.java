@@ -31,6 +31,9 @@ public class EsBulk {
 	}
 
 	public int size() {
+		if (builder == null) {
+			return 0;
+		}
 		return builder.numberOfActions();
 	}
 

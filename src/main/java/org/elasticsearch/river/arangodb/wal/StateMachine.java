@@ -5,8 +5,11 @@ import java.util.Map;
 
 import net.swisstech.swissarmyknife.util.Stack;
 
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 
+@Singleton
 public class StateMachine {
 
 	private final Stack<State> states = new Stack<>();
@@ -14,6 +17,7 @@ public class StateMachine {
 
 	private final ArangoDbConfig config;
 
+	@Inject
 	public StateMachine(ArangoDbConfig config) {
 		this.config = config;
 	}

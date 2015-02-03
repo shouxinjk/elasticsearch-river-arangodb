@@ -39,7 +39,7 @@ public class ArangoDbRiverModule extends AbstractModule {
 
 		String user = config.getArangodbCredentialsUsername();
 		String pass = config.getArangodbCredentialsPassword();
-		if (isBlank(user) && isBlank(pass)) {
+		if (user == null && pass == null) {
 			return new WalClient(baseUrl);
 		}
 		else {
@@ -73,7 +73,7 @@ public class ArangoDbRiverModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	@Named("arangodb_river_indexer_threadfactory")
+	@Named("arangodb_river_indexWriterRunnable_threadfactory")
 	public ThreadFactory getIndexerThreadFactory(RiverSettings settings) {
 		return EsExecutors.daemonThreadFactory(settings.globalSettings(), "arangodb_river_indexer");
 	}

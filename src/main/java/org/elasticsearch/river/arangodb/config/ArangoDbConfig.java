@@ -77,8 +77,8 @@ public class ArangoDbConfig {
 		arangodbOptionsExcludeFields = unmodifiableSet(excludes);
 
 		// arangodb.credentials
-		arangodbCredentialsUsername = notBlank(rsw.getString("arangodb.credentials.username", ""));
-		arangodbCredentialsPassword = notBlank(rsw.getString("arangodb.credentials.password", ""));
+		arangodbCredentialsUsername = rsw.getString("arangodb.credentials.username", "");
+		arangodbCredentialsPassword = rsw.getString("arangodb.credentials.password", "");
 
 		// index
 		indexName = notBlank(rsw.getString("index.name", riverName));
