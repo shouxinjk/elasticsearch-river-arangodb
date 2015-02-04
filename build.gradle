@@ -52,7 +52,7 @@ sourceSets {
 // project dependencies
 ext.versions = [
 	  elasticsearch      : '1.4.2'
-	, arangodb_wal_client: '1.1.6'
+	, arangodb_wal_client: '1.1.7'
 	, jackson            : '1.9.13'
 	, swissarmyknife     : '1.2.2'
 	, logback_classic    : '1.1.2'
@@ -184,6 +184,10 @@ afterEvaluate {
 		copy {
 			from tasks['copy'].destinationDir
 			into "${pluginDir}/arangodb"
+		}
+		copy {
+			from '/etc/elasticsearch/logging.yml'
+			into confDir
 		}
 
 		project.ext.elasticsearch_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess

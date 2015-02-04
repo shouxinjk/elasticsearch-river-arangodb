@@ -4,9 +4,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TestDocument {
 
+	private String id;
 	private String key;
 	private String rev;
 	private String text;
+
+	@JsonProperty("_id")
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
 
 	@JsonProperty("_key")
 	public String getKey() {

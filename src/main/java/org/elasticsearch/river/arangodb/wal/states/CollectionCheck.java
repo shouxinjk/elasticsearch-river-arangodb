@@ -42,8 +42,6 @@ public class CollectionCheck extends BaseState {
 		 * do work
 		 */
 
-		long tick = 0;
-		boolean found = false;
 		Inventory inventory = null;
 		try {
 			inventory = client.inventory();
@@ -53,8 +51,8 @@ public class CollectionCheck extends BaseState {
 			// this is bad! maybe just a temporary network error?
 		}
 
-		found = findCollection(inventory);
-		tick = extractTick(inventory);
+		boolean found = findCollection(inventory);
+		long tick = extractTick(inventory);
 
 		/*
 		 * next state
@@ -64,7 +62,7 @@ public class CollectionCheck extends BaseState {
 		ReadWal readWal = (ReadWal) stateMachine.get(READ_WAL);
 
 		if (found) {
-			LOG.info("Collection {} found", collectionName);
+			LOG.info("Collection {} found, using tick {}", collectionName, tick);
 
 			sleep.resetErrorCount();
 

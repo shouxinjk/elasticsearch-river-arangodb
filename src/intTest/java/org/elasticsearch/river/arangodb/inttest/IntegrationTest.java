@@ -3,6 +3,7 @@ package org.elasticsearch.river.arangodb.inttest;
 import static net.swisstech.swissarmyknife.lang.Threads.sleepFor;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
@@ -74,7 +75,7 @@ public class IntegrationTest {
 			int status = sr.getStatus();
 			if (status == 404 || status == 503) {
 				// not yet ready
-				sleepFor(50);
+				sleepFor(100);
 				continue;
 			}
 			assertEquals(sr.getHits().getTotal(), 0);
@@ -83,6 +84,11 @@ public class IntegrationTest {
 		}
 
 		assertTrue(found);
+
+		// it seems we need to wait a little bit until the river is actually up and running. if we add the
+		// document too early, the river plugin will connect after it's been sent to the WAL and we've
+		// missed it... so we sleep a bit
+		sleepFor(2_000);
 
 		// add document
 		LOG.info(">>> Adding doc to arangodb");
@@ -93,6 +99,10 @@ public class IntegrationTest {
 		assertFalse(rsp.getError());
 		// assertOneOf(rsp.getCode(), 201, 202);
 
+		// check doc is in arangodb
+		LOG.info(">>> Verifying doc is in arangodb");
+		assertNotNull(mc.get(arangoCollection, td.getKey(), TestDocument.class));
+
 		// 1 hit and matching content
 		LOG.info(">>> Looking for added doc in elasticsearch");
 		end = System.currentTimeMillis() + 10_000;
@@ -101,7 +111,7 @@ public class IntegrationTest {
 			SearchResponse sr = DebugClient.query(esHost, esPort, indexName, indexType, keyword1);
 			Hits hits = sr.getHits();
 			if (hits.getTotal() != 1) {
-				sleepFor(50);
+				sleepFor(100);
 				continue;
 			}
 
@@ -129,7 +139,7 @@ public class IntegrationTest {
 			SearchResponse sr = DebugClient.query(esHost, esPort, indexName, indexType, keyword1);
 			Hits hits = sr.getHits();
 			if (hits.getTotal() != 1) {
-				sleepFor(50);
+				sleepFor(100);
 				continue;
 			}
 
@@ -156,7 +166,7 @@ public class IntegrationTest {
 			SearchResponse sr = DebugClient.query(esHost, esPort, indexName, indexType, keyword1);
 			Hits hits = sr.getHits();
 			if (hits.getTotal() == 1) {
-				sleepFor(50);
+				sleepFor(100);
 				continue;
 			}
 

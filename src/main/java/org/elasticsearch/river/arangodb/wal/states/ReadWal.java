@@ -76,7 +76,7 @@ public class ReadWal extends BaseState {
 		}
 		else if (204 == code) {
 			boolean more = dump.getHeaders().getReplicationCheckmore();
-			LOG.info("Dump has no content, checkMore == {}", more);
+			LOG.info("Dump has no content, checkMore={} tick={}", more, tick);
 
 			if (more) {
 				// no op, go straight back to reading the WAL
