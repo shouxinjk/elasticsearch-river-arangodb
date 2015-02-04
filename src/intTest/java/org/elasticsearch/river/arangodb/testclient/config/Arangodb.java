@@ -1,4 +1,4 @@
-package org.elasticsearch.river.arangodb.client;
+package org.elasticsearch.river.arangodb.testclient.config;
 
 import java.util.List;
 

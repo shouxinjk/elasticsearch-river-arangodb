@@ -24,9 +24,9 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.elasticsearch.plugin.river.arangodb.ArangoDbRiverPlugin;
-import org.elasticsearch.river.arangodb.client.Arangodb;
-import org.elasticsearch.river.arangodb.client.Index;
-import org.elasticsearch.river.arangodb.client.Meta;
+import org.elasticsearch.river.arangodb.testclient.config.Arangodb;
+import org.elasticsearch.river.arangodb.testclient.config.Index;
+import org.elasticsearch.river.arangodb.testclient.config.Meta;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.squareup.okhttp.MediaType;
