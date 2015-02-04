@@ -10,8 +10,6 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.river.arangodb.config.ArangoDbConfig;
 import org.elasticsearch.river.arangodb.wal.states.CollectionCheck;
-import org.elasticsearch.river.arangodb.wal.states.CollectionMissing;
-import org.elasticsearch.river.arangodb.wal.states.DropCollection;
 import org.elasticsearch.river.arangodb.wal.states.Enqueue;
 import org.elasticsearch.river.arangodb.wal.states.ReadWal;
 import org.elasticsearch.river.arangodb.wal.states.Sleep;
@@ -33,8 +31,6 @@ public class StateMachine {
 		// should have them referenced from somewhere, preferrably as static fields but then we can't
 		// use guice's ctor injection
 		new CollectionCheck(this, config, client);
-		new CollectionMissing(this, config);
-		new DropCollection(this, config);
 		new Enqueue(this, config);
 		new ReadWal(this, config, client);
 		new Sleep(this, config);

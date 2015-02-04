@@ -1,6 +1,6 @@
 package org.elasticsearch.river.arangodb.wal.states;
 
-import static org.elasticsearch.river.arangodb.wal.StateName.COLLECTION_MISSING;
+import static org.elasticsearch.river.arangodb.wal.StateName.COLLECTION_CHECK;
 import static org.elasticsearch.river.arangodb.wal.StateName.ENQUEUE;
 import static org.elasticsearch.river.arangodb.wal.StateName.READ_WAL;
 import static org.elasticsearch.river.arangodb.wal.StateName.SLEEP;
@@ -91,7 +91,7 @@ public class ReadWal extends BaseState {
 
 			tick = -1;
 			stateMachine.pop();
-			stateMachine.push(COLLECTION_MISSING);
+			stateMachine.push(COLLECTION_CHECK);
 		}
 	}
 

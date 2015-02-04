@@ -35,7 +35,6 @@ public class ArangoDbConfig {
 	private final String arangodbCollection;
 	private final String arangodbScript;
 	private final String arangodbScripttype;
-	private final boolean arangodbDropcollection;
 	private final long arangodbReaderMinSleep;
 	private final long arangodbReaderMaxSleep;
 	private final Set<String> arangodbOptionsExcludeFields;
@@ -68,7 +67,6 @@ public class ArangoDbConfig {
 		arangodbScripttype = notBlank(rsw.getString("arangodb.script_type", "js"));
 
 		// arangodb.options
-		arangodbDropcollection = rsw.getBool("arangodb.drop_collection", true);
 		arangodbReaderMinSleep = positive(rsw.getTimeValue("arangodb.reader_min_sleep", timeValueMillis(100)).millis());
 		arangodbReaderMaxSleep = positive(rsw.getTimeValue("arangodb.reader_max_sleep", timeValueMillis(10_000)).millis());
 
@@ -132,10 +130,6 @@ public class ArangoDbConfig {
 
 	public String getArangodbScripttype() {
 		return arangodbScripttype;
-	}
-
-	public boolean getArangodbDropcollection() {
-		return arangodbDropcollection;
 	}
 
 	public long getArangodbReaderMinSleep() {
