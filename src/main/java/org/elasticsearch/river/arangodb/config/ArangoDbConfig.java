@@ -1,14 +1,11 @@
 package org.elasticsearch.river.arangodb.config;
 
-import static java.util.Collections.unmodifiableSet;
 import static net.swisstech.swissarmyknife.lang.Integers.positive;
 import static net.swisstech.swissarmyknife.lang.Longs.positive;
 import static net.swisstech.swissarmyknife.lang.Strings.notBlank;
 import static net.swisstech.swissarmyknife.net.TCP.validPortNumber;
-import static net.swisstech.swissarmyknife.util.Sets.newHashSet;
 import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
 
-import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
@@ -37,7 +34,6 @@ public class ArangoDbConfig {
 	private final String arangodbScripttype;
 	private final long arangodbReaderMinSleep;
 	private final long arangodbReaderMaxSleep;
-	private final Set<String> arangodbOptionsExcludeFields;
 	private final String arangodbCredentialsUsername;
 	private final String arangodbCredentialsPassword;
 	private final String indexName;
@@ -69,10 +65,6 @@ public class ArangoDbConfig {
 		// arangodb.options
 		arangodbReaderMinSleep = positive(rsw.getTimeValue("arangodb.reader_min_sleep", timeValueMillis(100)).millis());
 		arangodbReaderMaxSleep = positive(rsw.getTimeValue("arangodb.reader_max_sleep", timeValueMillis(10_000)).millis());
-
-		Set<String> excludes = newHashSet("_id", "_key", "_rev");
-		excludes.addAll(rsw.getList("arangodb.options.exclude_fields"));
-		arangodbOptionsExcludeFields = unmodifiableSet(excludes);
 
 		// arangodb.credentials
 		arangodbCredentialsUsername = rsw.getString("arangodb.credentials.username", "");
@@ -138,10 +130,6 @@ public class ArangoDbConfig {
 
 	public long getArangodbReaderMaxSleep() {
 		return arangodbReaderMaxSleep;
-	}
-
-	public Set<String> getArangodbOptionsExcludeFields() {
-		return arangodbOptionsExcludeFields;
 	}
 
 	public String getArangodbCredentialsUsername() {

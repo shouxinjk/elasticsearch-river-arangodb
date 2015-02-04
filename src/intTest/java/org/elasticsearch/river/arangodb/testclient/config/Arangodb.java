@@ -1,7 +1,5 @@
 package org.elasticsearch.river.arangodb.testclient.config;
 
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Arangodb {
@@ -13,8 +11,6 @@ public class Arangodb {
 	private Credentials credentials;
 	private String readerMinSleep;
 	private String readerMaxSleep;
-	private boolean dropCollection;
-	private List<String> excludeFields;
 	private String script;
 
 	public String getHost() {
@@ -73,24 +69,6 @@ public class Arangodb {
 
 	public void setReaderMaxSleep(String readerMaxSleep) {
 		this.readerMaxSleep = readerMaxSleep;
-	}
-
-	@JsonProperty("drop_collection")
-	public boolean getDropCollection() {
-		return dropCollection;
-	}
-
-	public void setDropCollection(boolean dropCollection) {
-		this.dropCollection = dropCollection;
-	}
-
-	@JsonProperty("exclude_fields")
-	public List<String> getExcludeFields() {
-		return excludeFields;
-	}
-
-	public void setExcludeFields(List<String> excludeFields) {
-		this.excludeFields = excludeFields;
 	}
 
 	public String getScript() {

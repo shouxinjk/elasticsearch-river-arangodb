@@ -65,10 +65,6 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
         },
         "reader_min_sleep": "100ms",
         "reader_max_sleep": "10s",
-        "exclude_fields": [
-            "internal1",
-            "internal2"
-        ],
         "script" : "ctx.doc.title = ctx.doc.manufacturer + \" \" + ctx.doc.model;"
     },
     "index": {
