@@ -1,5 +1,7 @@
 package org.elasticsearch.river.arangodb.wal;
 
+import static net.swisstech.swissarmyknife.lang.Objects.notNull;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,7 +47,7 @@ public class StateMachine {
 	}
 
 	public void push(State state) {
-		states.push(state);
+		states.push(notNull(state));
 	}
 
 	public void push(StateName name) {
@@ -53,11 +55,11 @@ public class StateMachine {
 	}
 
 	public State get(StateName name) {
-		return map.get(name);
+		return notNull(map.get(name));
 	}
 
 	public void register(StateName name, State state) {
-		map.put(name, state);
+		map.put(notNull(name), notNull(state));
 	}
 
 	public ArangoDbConfig getConfig() {
