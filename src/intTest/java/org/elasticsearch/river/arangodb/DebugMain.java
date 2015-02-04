@@ -1,20 +1,13 @@
 package org.elasticsearch.river.arangodb;
 
 import static net.swisstech.swissarmyknife.io.Closeables.close;
-import static org.elasticsearch.river.arangodb.util.JacksonUtil.MAPPER;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import net.swisstech.arangodb.MgmtClient;
-import net.swisstech.arangodb.MgmtClient.CreateCollectionResponse;
 
 import org.apache.commons.io.FileUtils;
 import org.elasticsearch.client.AdminClient;
@@ -22,15 +15,7 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
-import org.elasticsearch.plugin.river.arangodb.ArangoDbRiverPlugin;
-import org.elasticsearch.river.arangodb.testclient.config.Meta;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
+import org.elasticsearch.river.arangodb.testclient.DebugClient;
 
 /**
  * a main class to launch ES for debugging. Since the arangodb plugin is already in the classpath, we don't even need to install it, how convenient! Based on
@@ -38,11 +23,8 @@ import com.squareup.okhttp.Response;
  */
 public class DebugMain {
 
-	private static final MediaType MEDIATYPE_JSON = MediaType.parse("application/json; charset=utf-8");
-
 	private static final String CLUSTER_NAME = "debugTestCluster";
 	private static final String NODE_NAME = "debugTestNode";
-	private static final int HTTP_PORT = 19200;
 
 	private final String basePath;
 	private final Path baseDir;
@@ -70,11 +52,19 @@ public class DebugMain {
 
 	public void execute() throws IOException {
 
+		String arangoHost = "localhost";
+		int arangoPort = 8529;
+		String arangoDb = "_system";
+		String collectionName = "test";
+
+		String esHost = "localhost";
+		int esPort = 9200;
+
 		Settings settings = ImmutableSettings //
 			.settingsBuilder() //
 			.put("cluster.name", CLUSTER_NAME) //
 			.put("node.name", NODE_NAME) //
-			.put("http.port", HTTP_PORT) //
+			.put("http.port", esPort) //
 			.put("path.plugins", pluginsDir.toString()) //
 			.put("path.conf", confDir.toString()) //
 			.put("path.logs", logsDir.toAbsolutePath()) //
@@ -111,19 +101,19 @@ public class DebugMain {
 		System.out.println(">>> PLUGIN CHECK");
 		System.out.println(">>>");
 
-		checkPluginInstalled(node);
+		DebugClient.checkPluginInstalled(esHost, esPort);
 
 		System.out.println(">>>");
 		System.out.println(">>> START RIVER");
 		System.out.println(">>>");
 
-		createCollection();
+		DebugClient.createCollection(arangoHost, arangoPort, arangoDb, collectionName);
 
 		System.out.println(">>>");
 		System.out.println(">>> START RIVER");
 		System.out.println(">>>");
 
-		startRiver("_system", "test", "localhost", 8529, "test_index", "test_type");
+		DebugClient.startRiver(arangoDb, collectionName, arangoHost, arangoPort, "arango_river", esHost, esPort, "test_index", "test_type");
 
 		System.out.println(">>>");
 		System.out.println(">>> TYPE 'quit' TO STOP ELASTICSEARCH");
@@ -141,7 +131,7 @@ public class DebugMain {
 					break;
 				}
 				if ("kill".equals(line)) {
-					System.out.println("> kill kill kill!!!");
+					System.out.println("> exterminate!!");
 					return;
 				}
 			}
@@ -155,51 +145,7 @@ public class DebugMain {
 			System.out.println("###");
 		}
 
+		DebugClient.deleteCollection(arangoHost, arangoPort, arangoDb, collectionName);
 		FileUtils.forceDelete(baseDir.toFile());
-	}
-
-	private void createCollection() throws IOException {
-		MgmtClient mc = new MgmtClient("http://localhost:8529/_db/_system");
-		CreateCollectionResponse ccrsp = mc.createCollection("test");
-		int code = ccrsp.getCode();
-		if (code != 200 && code != 409) {
-			fail("creating collection in arangodb failed: " + MAPPER.writeValueAsString(ccrsp));
-		}
-	}
-
-	private void startRiver(String db, String collection, String host, int port, String indexName, String indexType) throws IOException {
-
-		Meta meta = Meta.create(db, collection, host, port, indexName, indexType);
-		String json = MAPPER.writeValueAsString(meta);
-
-		System.out.println("###");
-		System.out.println("### REQ: " + json);
-		System.out.println("###");
-
-		RequestBody body = RequestBody.create(MEDIATYPE_JSON, json);
-		Request req = new Request.Builder().url("http://localhost:" + HTTP_PORT + "/_river/arangodb_test/_meta").put(body).build();
-		Response rsp = new OkHttpClient().newCall(req).execute();
-
-		System.out.println("###");
-		System.out.println("### RSP: " + rsp.body().string());
-		System.out.println("###");
-
-		assertEquals(rsp.code(), 201);
-	}
-
-	private void checkPluginInstalled(Node node) throws IOException {
-		Request req = new Request.Builder().url("http://localhost:" + HTTP_PORT + "/_nodes").get().build();
-		Response rsp = new OkHttpClient().newCall(req).execute();
-		InputStream in = rsp.body().byteStream();
-		JsonNode root = MAPPER.readValue(in, JsonNode.class);
-
-		JsonNode nodes = root.get("nodes");
-		String nodeName = nodes.fieldNames().next();
-		JsonNode thisNode = nodes.get(nodeName);
-		JsonNode plugins = thisNode.get("plugins");
-		assertEquals(plugins.size(), 1);
-
-		JsonNode plugin = plugins.get(0);
-		assertEquals(plugin.get("name").asText(), ArangoDbRiverPlugin.NAME);
 	}
 }
