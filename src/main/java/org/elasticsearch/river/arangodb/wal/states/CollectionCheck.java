@@ -51,8 +51,6 @@ public class CollectionCheck extends BaseState {
 			// this is bad! maybe just a temporary network error?
 		}
 
-		boolean found = findCollection(inventory);
-		long tick = extractTick(inventory);
 
 		/*
 		 * next state
@@ -61,23 +59,33 @@ public class CollectionCheck extends BaseState {
 		Sleep sleep = (Sleep) stateMachine.get(SLEEP);
 		ReadWal readWal = (ReadWal) stateMachine.get(READ_WAL);
 
-		if (found) {
-			LOG.info("Collection {} found, using tick {}", collectionName, tick);
-
-			sleep.resetErrorCount();
-
-			// remove self
-			stateMachine.pop();
-
-			// next step is to read the WAL
-			readWal.setTick(tick);
-			stateMachine.push(readWal);
-		}
-		else {
-			LOG.info("Collection {} not found", collectionName);
-
+		if (inventory == null) {
+			// error, retry later
 			sleep.increaseErrorCount();
 			stateMachine.push(sleep);
+		}
+		else {
+			boolean found = findCollection(inventory);
+			if (found) {
+				long tick = extractTick(inventory);
+
+				LOG.info("Collection {} found, using tick {}", collectionName, tick);
+
+				sleep.resetErrorCount();
+
+				// remove self
+				stateMachine.pop();
+
+				// next step is to read the WAL
+				readWal.setTick(tick);
+				stateMachine.push(readWal);
+			}
+			else {
+				LOG.info("Collection {} not found", collectionName);
+
+				sleep.increaseErrorCount();
+				stateMachine.push(sleep);
+			}
 		}
 	}
 

@@ -136,7 +136,7 @@ public class IntegrationTest {
 		end = System.currentTimeMillis() + 10_000;
 		found = false;
 		while (System.currentTimeMillis() < end) {
-			SearchResponse sr = DebugClient.query(esHost, esPort, indexName, indexType, keyword1);
+			SearchResponse sr = DebugClient.query(esHost, esPort, indexName, indexType, keyword2);
 			Hits hits = sr.getHits();
 			if (hits.getTotal() != 1) {
 				sleepFor(100);
