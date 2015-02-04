@@ -51,7 +51,6 @@ public class CollectionCheck extends BaseState {
 			// this is bad! maybe just a temporary network error?
 		}
 
-
 		/*
 		 * next state
 		 */
