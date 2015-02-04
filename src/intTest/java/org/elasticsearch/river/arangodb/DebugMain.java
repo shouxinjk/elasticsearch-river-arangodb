@@ -39,7 +39,7 @@ import com.squareup.okhttp.Response;
  * a main class to launch ES for debugging. Since the arangodb plugin is already in the classpath, we don't even need to install it, how convenient! Based on
  * this blog post: https://orrsella.com/2014/10/28/embedded-elasticsearch-server-for-scala-integration-tests/
  */
-public class TestMain {
+public class DebugMain {
 
 	private static final MediaType MEDIATYPE_JSON = MediaType.parse("application/json; charset=utf-8");
 
@@ -55,7 +55,7 @@ public class TestMain {
 	private final Path dataDir;
 	private final Path workDir;
 
-	public TestMain() throws IOException {
+	public DebugMain() throws IOException {
 		basePath = "/tmp/debug_river_" + System.currentTimeMillis();
 		baseDir = Paths.get(basePath);
 		Files.createDirectory(baseDir);
@@ -68,7 +68,7 @@ public class TestMain {
 	}
 
 	public static void main(String[] args) throws IOException {
-		new TestMain().execute();
+		new DebugMain().execute();
 	}
 
 	public void execute() throws IOException {
