@@ -12,7 +12,6 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 
 import net.swisstech.arangodb.MgmtClient;
 import net.swisstech.arangodb.MgmtClient.CreateCollectionResponse;
@@ -24,8 +23,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.elasticsearch.plugin.river.arangodb.ArangoDbRiverPlugin;
-import org.elasticsearch.river.arangodb.testclient.config.Arangodb;
-import org.elasticsearch.river.arangodb.testclient.config.Index;
 import org.elasticsearch.river.arangodb.testclient.config.Meta;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -126,7 +123,7 @@ public class DebugMain {
 		System.out.println(">>> START RIVER");
 		System.out.println(">>>");
 
-		startRiver();
+		startRiver("_system", "test", "localhost", 8529, "test_index", "test_type");
 
 		System.out.println(">>>");
 		System.out.println(">>> TYPE 'quit' TO STOP ELASTICSEARCH");
@@ -170,30 +167,9 @@ public class DebugMain {
 		}
 	}
 
-	private void startRiver() throws IOException {
+	private void startRiver(String db, String collection, String host, int port, String indexName, String indexType) throws IOException {
 
-		Arangodb arangodb = new Arangodb();
-		arangodb.setCollection("test");
-		arangodb.setCredentials(null);
-		arangodb.setDb("_system");
-		arangodb.setDropCollection(false);
-		arangodb.setExcludeFields(new ArrayList<String>());
-		arangodb.setHost("localhost");
-		arangodb.setPort(8529);
-		arangodb.setReaderMaxSleep("5000ms");
-		arangodb.setReaderMinSleep("100ms");
-		arangodb.setScript(null);
-
-		Index index = new Index();
-		index.setBulkSize(5000);
-		index.setBulkTimeout("50ms");
-		index.setName("test_index");
-		index.setType("test_type");
-
-		Meta meta = new Meta();
-		meta.setArangodb(arangodb);
-		meta.setIndex(index);
-
+		Meta meta = Meta.create(db, collection, host, port, indexName, indexType);
 		String json = MAPPER.writeValueAsString(meta);
 
 		System.out.println("###");
