@@ -153,7 +153,7 @@ task('jacocoIntTestReport', type: JacocoReport) {
 	sourceSets sourceSets.main
 }
 
-// start & stop arangodb
+// start & stop arangodb and elasticsearch for intTests
 afterEvaluate {
 
 	task('startArangoDb') << {
