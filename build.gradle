@@ -44,8 +44,8 @@ sourceSets {
 		compileClasspath += configurations.provided
 	}
 	intTest {
-		compileClasspath = sourceSets.main.output + configurations.testRuntime
-		runtimeClasspath = sourceSets.main.output + configurations.testRuntime + output
+		compileClasspath = sourceSets.main.output + configurations.provided + configurations.testRuntime
+		runtimeClasspath = sourceSets.main.output + configurations.provided + configurations.testRuntime + output
 	}
 }
 
