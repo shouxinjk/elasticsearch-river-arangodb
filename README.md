@@ -70,13 +70,8 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
             "username": "riveruser",
             "password": "rivauser"
         },
-        "options": {
-            "drop_collection": false,
-            "exclude_fields": [
-                "internal1",
-                "internal2"
-            ]
-        },
+        "reader_min_sleep": "100ms",
+        "reader_max_sleep": "10s",
         "script" : "ctx.doc.title = ctx.doc.manufacturer + \" \" + ctx.doc.model;"
     },
     "index": {
@@ -102,12 +97,12 @@ Installation of the plugin is simple:
 # install from url
 /usr/share/elasticsearch/bin/plugin \
     --install arangodb \
-    --url http://www.arangodb.org/downloads/elasticsearch-river-arangodb-0.3.0.zip
+    --url https://github.com/triAGENS/elasticsearch-river-arangodb/releases/download/v0.4.0/elasticsearch-river-arangodb-0.4.0.zip
 
 # install from file
 /usr/share/elasticsearch/bin/plugin \
     --install arangodb \
-    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-0.3.0.zip
+    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-0.4.0.zip
 
 # remove the plugin (required for upgrades)
 /usr/share/elasticsearch/bin/plugin \

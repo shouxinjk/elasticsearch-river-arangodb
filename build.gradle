@@ -1,0 +1,241 @@
+
+// build script
+buildscript {
+	repositories {
+		mavenLocal()
+		mavenCentral()
+		jcenter()
+	}
+	dependencies {
+		classpath 'net.swisstech:swissarmyknife:+'
+	}
+}
+
+// plugins
+plugins {
+	id 'java'
+	id 'jacoco'
+	id 'eclipse'
+	id 'maven-publish'
+	id 'project-report'
+	id 'net.swisstech.eclipseenhancer' version '1.0.0'
+}
+
+// re-use repositories from buildscript
+buildscript.repositories.each { repositories.add(it) }
+
+// java version
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+// basic infos
+description = 'ElasticSearch River plugin for ArangoDB'
+group       = 'com.github.triagens.elasticsearch'
+version     = '1.0.0.rc1'
+
+// extra configuration for integration tests
+configurations {
+	provided
+	intTestCompile
+}
+
+sourceSets {
+	main {
+		compileClasspath += configurations.provided
+	}
+	intTest {
+		compileClasspath = sourceSets.main.output + configurations.provided + configurations.testRuntime
+		runtimeClasspath = sourceSets.main.output + configurations.provided + configurations.testRuntime + output
+	}
+}
+
+// project dependencies
+ext.versions = [
+	  elasticsearch      : '1.4.2'
+	, arangodb_wal_client: '1.1.7'
+	, jackson            : '1.9.13'
+	, swissarmyknife     : '1.2.2'
+	, logback_classic    : '1.1.2'
+	, testng             : '6.8.17'
+	, mockito            : '1.10.19'
+]
+
+dependencies {
+	// provided dependencies
+	provided "org.elasticsearch:elasticsearch:${versions.elasticsearch}"
+
+	// bundled dependencies
+	compile "org.codehaus.jackson:jackson-mapper-asl:${versions.jackson}"
+	compile "net.swisstech:arangodb-wal-client:${versions.arangodb_wal_client}"
+	compile "net.swisstech:swissarmyknife:${versions.swissarmyknife}"
+
+	// test dependencies
+	testCompile "ch.qos.logback:logback-classic:${versions.logback_classic}"
+	testCompile "org.testng:testng:${versions.testng}"
+	testCompile "org.mockito:mockito-all:${versions.mockito}"
+}
+
+eclipse.classpath.plusConfigurations += [ configurations.provided ]
+
+test {
+	useTestNG()
+}
+
+// task to generate wrapper
+task wrapper(type: Wrapper) {
+	gradleVersion = '2.2.1'
+}
+
+// create distribution zip
+task copy(type: Copy) {
+	destinationDir = file("${buildDir}/distlibs")
+	from configurations.runtime
+	from jar
+}
+
+task dist(type: Zip) {
+	from copy
+}
+
+// source-code jar
+task sourceJar(type: Jar) {
+	from sourceSets.main.allSource
+}
+
+// configure maven jar publishing
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			artifact sourceJar {
+				classifier 'sources'
+			}
+		}
+	}
+}
+
+// normal unit tests
+test {
+	useTestNG()
+
+	jacoco {
+		destinationFile = file("${buildDir}/jacoco.ut.exec")
+	}
+}
+
+// setup for integration tests, requires a local installation of arangodb
+ext.arangoDbPort         = 18529
+ext.arangoDataDir        = "/tmp/river_arangodb${System.currentTimeMillis()}"
+ext.elasticsearchPort    = 19200
+ext.elasticsearchDataDir = "/tmp/river_elasticsearch${System.currentTimeMillis()}"
+
+task('intTest', type: Test, dependsOn: 'intTestClasses') {
+	useTestNG()
+	testLogging.showStandardStreams = true
+	group          = 'verification'
+	testSrcDirs    = sourceSets.intTest.java.srcDirs as List
+	testClassesDir = sourceSets.intTest.output.classesDir
+	classpath      = sourceSets.intTest.runtimeClasspath
+	systemProperty 'ARANGODB_PORT'     , project.arangoDbPort
+	systemProperty 'ELASTICSEARCH_PORT', project.elasticsearchPort
+
+	jacoco {
+		destinationFile = file("${buildDir}/jacoco.it.exec")
+	}
+}
+
+jacocoTestReport {
+	reports.html.destination = "${reportsDir}/jacoco/${name}"
+}
+task('jacocoIntTestReport', type: JacocoReport) {
+	reports.html.destination = "${reportsDir}/jacoco/${name}"
+	executionData intTest
+	sourceSets sourceSets.main
+}
+
+// start & stop arangodb and elasticsearch for intTests
+afterEvaluate {
+
+	task('startArangoDb') << {
+		new File(project.arangoDataDir + "/data").mkdirs()
+		project.ext.arangodb_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
+			.launch([
+				'/usr/sbin/arangod',
+				'--server.endpoint'   , "tcp://127.0.0.1:${project.arangoDbPort}",
+				'--database.directory', "${project.arangoDataDir}/data",
+				'--log.file'          , '+'
+			], null)
+			.waitForOpenPorts([ project.arangoDbPort ], 10000)
+	}
+
+	task('stopArangoDb') << {
+		project.arangodb_process.shutdown()
+		project.delete(project.arangoDataDir)
+	}
+
+	task('startElasticSearch', dependsOn: dist) << {
+		def pluginDir = project.elasticsearchDataDir + "/plugin"
+		def confDir   = project.elasticsearchDataDir + "/conf"
+		def logDir    = project.elasticsearchDataDir + "/log"
+		def dataDir   = project.elasticsearchDataDir + "/data"
+		def workDir   = project.elasticsearchDataDir + "/work"
+		[ pluginDir, confDir, logDir, dataDir, workDir ].each { new File(it).mkdirs() }
+
+		copy {
+			from tasks['copy'].destinationDir
+			into "${pluginDir}/arangodb"
+		}
+		copy {
+			from '/etc/elasticsearch/logging.yml'
+			into confDir
+		}
+
+		project.ext.elasticsearch_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
+			.launch([
+				'/usr/share/elasticsearch/bin/elasticsearch',
+				'--cluster.name' , 'intTestCluster',
+				'--node.name'    , 'intTestName',
+				'--http.port'    , "${project.elasticsearchPort}",
+				'--path.plugins' , "${pluginDir}",
+				'--path.conf'    , "${confDir}",
+				'--path.logs'    , "${logDir}",
+				'--path.data'    , "${dataDir}",
+				'--path.work'    , "${workDir}"
+			], null)
+			.waitForOpenPorts([ project.elasticsearchPort ], 15000)
+		println ">>> elasticsearch ready for operation"
+
+		def found = false
+		for (int i = 0; i < 10; i++) {
+			def data = new groovy.json.JsonSlurper().parse(new URL("http://localhost:${project.elasticsearchPort}/_nodes"))
+			for (node in data.nodes.values()) {
+				for (plugin in node.plugins) {
+					if ("river-arangodb".equals(plugin.name)) {
+						found = true
+						break
+					}
+				}
+				if (found) { break; }
+			}
+			if (found) { break; }
+			Thread.sleep(1000)
+		}
+
+		if (!found) {
+			throw new GradleException("plugin not found in node state")
+		}
+
+		println ">>> plugin found and installed"
+	}
+
+	task('stopElasticSearch') << {
+		project.elasticsearch_process.shutdown()
+		project.delete(project.elasticsearchDataDir)
+	}
+
+	tasks.intTest.dependsOn('startElasticSearch')
+	tasks.intTest.finalizedBy('stopElasticSearch')
+
+	tasks.intTest.dependsOn('startArangoDb')
+	tasks.intTest.finalizedBy('stopArangoDb')
+}

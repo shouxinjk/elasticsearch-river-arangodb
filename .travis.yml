@@ -5,3 +5,19 @@ jdk:
   - openjdk7
   - oraclejdk7
   - oraclejdk8
+
+before_script:
+  - sudo apt-get purge elasticsearch
+  - sudo apt-get -q update
+  - sudo apt-get -q install apt-transport-https
+  - wget -qO - https://www.arangodb.com/repositories/arangodb2/Debian_7.0/Release.key | sudo apt-key add -
+  - wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch               | sudo apt-key add -
+  - echo 'deb https://www.arangodb.com/repositories/arangodb2/Debian_7.0/ /'          | sudo tee -a /etc/apt/sources.list
+  - echo 'deb http://packages.elasticsearch.org/elasticsearch/1.4/debian stable main' | sudo tee -a /etc/apt/sources.list
+  - sudo apt-get -q update
+  - sudo apt-get -q install arangodb elasticsearch
+  - sudo service arangodb stop
+  - sudo service elasticsearch stop
+
+script:
+  - ./gradlew intTest
