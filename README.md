@@ -44,7 +44,14 @@ The zip file contains all necessary dependencies and nothing else is needed to i
 
 ## Manual install
 
-To install manually, unzip the archive into the ES plugins directory see: 'paths.plugin' config value of ES.
+To install manually, unzip the archive into the ES plugins directory see: 'paths.plugin' config value of ES. The file structure should look like this:
+
+```
+$ cd <ES plugins directory>
+$ find . -type f
+./arangodb/elasticsearch-river-arangodb-1.0.0.rc1.jar
+./arangodb/... more jars (dependencies of the plugin) ...
+```
 
 ## Remove Plugin
 
