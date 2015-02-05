@@ -30,7 +30,7 @@ targetCompatibility = 1.7
 
 // basic infos
 description = 'ElasticSearch River plugin for ArangoDB'
-group       = 'com.github.triagens.elasticsearch'
+group       = 'com.arangodb.elasticsearch'
 version     = '1.0.0.rc1'
 
 // extra configuration for integration tests
