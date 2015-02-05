@@ -151,6 +151,19 @@ The following script will filter your data due to their availability flags:
 
 This script checks the "available" flag, and it changes the operation to "SKIP" for the given document context. This document will not be indexed. Please note that, if the document is already indexed, this will mean it won't be updated or deleted.
 
+# Development & Contributing
+
+If you want to change and test something, the basic development process is simple:
+
+* fork and clone repo, checkout devel branch
+* create your own branch from devel
+* eclipse users run `gradle cleanEclipse eclipse`
+* make your changes
+* run the integration tests (requires ArangoDB and ElasticSearch to be installed) with `gradle clean test intTest`
+* build a distribution with `gradle clean dist` (see directory `build/distributions`)
+* test your custom build in your environment
+* if happy commit and push, then create a pull request against the devel branch
+
 # License
 
 This software is licensed under the Apache 2 license, see the supplied LICENSE file.
