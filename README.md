@@ -1,6 +1,6 @@
 # ArangoDB River Plugin for ElasticSearch
 
-This is an ElasticSearch plugin that will connect to your ArangoDB server, read the replication log of a collection and update an ElasticSearch index with the data.
+This is an ElasticSearch plugin that will connect to your ArangoDB server, read the Write-Ahead-Log of a collection and update an ElasticSearch index with the data.
 
 # Build Status
 
@@ -11,18 +11,50 @@ This is an ElasticSearch plugin that will connect to your ArangoDB server, read 
 
 # Version Compatibility
 
-| ArangoDB River Plugin | ArangoDB                                                   | ElasticSearch |
-|-----------------------|------------------------------------------------------------|---------------|
-| 0.4.0 (devel branch)  | 2.2 and higher                                             | 1.4.x         |
-| 0.3.0                 | up to 2.2 (higher as long as replog is present and active) | 1.4.x         |
-| 0.2.0                 | 1.4.0                                                      | 1.0.0         |
-| 0.1.0-alpha           | 1.4.0                                                      | 0.90.5        |
+| ArangoDB River Plugin | ArangoDB                                         | ElasticSearch |
+|-----------------------|--------------------------------------------------|---------------|
+| 1.0.0.rc1             | 2.2 and higher                                   | 1.4.x         |
+| 0.3.0                 | up to 2.2 ( and higher if old replog is running) | 1.4.x         |
+| 0.2.0                 | 1.4.0                                            | 1.0.0         |
+| 0.1.0-alpha           | 1.4.0                                            | 0.90.5        |
 
-The ArangoDB river artefact is named `elasticsearch-river-arangodb-<version>.jar`.
+The ArangoDB river artifact is named `elasticsearch-river-arangodb-<version>.jar`.
 
-Current artefact version is: `elasticsearch-river-arangodb-0.3.0.jar`.
+The 0.x versions are old and will not be maintained anymore. Please use the latest version and file bugs against that.
 
-# Configuration
+# Installation
+
+The zip file contains all necessary dependencies and nothing else is needed to install it in ElasticSearch.
+
+## Install from URL
+
+```
+/usr/share/elasticsearch/bin/plugin \
+    --install arangodb \
+    --url https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/1.0.0.rc1/elasticsearch-river-arangodb-1.0.0.rc1.zip
+```
+
+## install from file (after manual download)
+
+```
+/usr/share/elasticsearch/bin/plugin \
+    --install arangodb \
+    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-1.0.0.rc1.zip
+```
+
+## Manual install
+
+To install manually, unzip the archive into the ES plugins directory see: 'paths.plugin' config value of ES.
+
+## Remove Plugin
+
+Removing the plugin is required for upgrades.
+
+```
+/usr/share/elasticsearch/bin/plugin --remove arangodb
+```
+
+# Start & Configuration
 
 To create the river, run a curl statement from a shell:
 
@@ -59,7 +91,7 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
 Here is a more complex configuration with user credentials and a simple javascript example:
 
 ```
-curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
+curl -XPUT 'http://localhost:9200/_river/arangodb_test_car2/_meta' -d '{
     "type": "arangodb",
     "arangodb": {
         "host": "carhost",
@@ -83,54 +115,13 @@ curl -XPUT 'http://localhost:9200/_river/arangodb_test_car/_meta' -d '{
 }'
 ```
 
-# Installation
+# Scripting
 
-* TODO [`elasticsearch-river-arangodb-0.4.0.zip`](https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/v0.4.0/elasticsearch-river-arangodb-0.4.0.zip)
-* [`elasticsearch-river-arangodb-0.3.0.zip`](https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/v0.3.0/elasticsearch-river-arangodb-0.3.0.zip)
-* [`elasticsearch-river-arangodb-0.2.0.zip`](https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/v0.2.0/elasticsearch-river-arangodb-0.2.0.zip)
+To use scripting to filter or manipulate documents before they are indexed, you must install the ElasticSearch scripting plugin. Please refer to the [ElasticSearch Plugins](http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/modules-plugins.html) documentation. Specifically, the scripting plugins.
 
-The zip file contains all necessary dependencies and nothing else is needed to install it in elasticsearch.
+# Tips & Tricks
 
-Installation of the plugin is simple:
-
-```
-# install from url
-/usr/share/elasticsearch/bin/plugin \
-    --install arangodb \
-    --url https://github.com/triAGENS/elasticsearch-river-arangodb/releases/download/v0.4.0/elasticsearch-river-arangodb-0.4.0.zip
-
-# install from file
-/usr/share/elasticsearch/bin/plugin \
-    --install arangodb \
-    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-0.4.0.zip
-
-# remove the plugin (required for upgrades)
-/usr/share/elasticsearch/bin/plugin \
-    --remove arangodb \
-```
-
-# Prerequisites
-
-Before you can use the ArangoDB river, you must ask ArangoDB to switch into the replication logger mode.
-To do so, open an ArangoDB shell and run the following commands:
-
-```
-db._useDatabase("<DATABASE_NAME>");
-require("org/arangodb/replication").logger.properties({autoStart: true, maxEvents: 1048576 });
-require("org/arangodb/replication").logger.start();
-```
-
-Don't forget to install the ElasticSearch language plugin if you intend to use a script within the river.
-Example (javascript):
-
-```
-sudo <ES_HOME>/bin/plugin -install elasticsearch/elasticsearch-lang-javascript/2.2.0
-```
-
-(this is the current javascript language plugin version for ElasticSearch v1.2.1).
-Scripting is not limited to javascript. See the corresponding ElasticSearch documentation.
-
-# Hints
+## ArangoDB Authentication
 
 To add a user for basic authentication, open an ArangoDB shell and run the following command:
 
@@ -149,17 +140,16 @@ When starting the database, you can set the ArangoDB daemon parameter
 
 if you like to run the database without any authentication mechanism.
 
-# Filtering
+## Filtering
 
 Use scripting if you want to filter your data. Let's say your documents have a boolean field named "available".
 The following script will filter your data due to their availability flags:
 
 ```
-"script" : "if ( ctx.doc.available == false ) { ctx.ignore = true };"
+"script" : "if ( ctx.doc.available == false ) { ctx.operation = 'SKIP' };"
 ```
 
-This script checks the "available" flag, and it adds an "ignore" flag to the given document context when indicated.
-This "ignore" flag then makes the indexer skip the document when processing the streamed data.
+This script checks the "available" flag, and it changes the operation to "SKIP" for the given document context. This document will not be indexed. Please note that, if the document is already indexed, this will mean it won't be updated or deleted.
 
 # License
 
@@ -167,10 +157,12 @@ This software is licensed under the Apache 2 license, see the supplied LICENSE f
 
 # Changelog
 
-## 0.4.0 TODO
+## 1.0.0.rc1
 - Works with ArangoDB versions of 2.2 and higher
-- Uses the Write-Ahead-Log and is *not* compatible with versions below 2.2
-- Tested with ArangoDB 2.3.x / 2.4
+- Uses the Write-Ahead-Log and is *not* compatible with ArangoDB versions below 2.2
+- This is a complete rewrite of the existing code
+- Tested with ArangoDB 2.4 and ElasticSearch 1.4
+- The configuration and featureset is slightly different. Existing users please carefully re-read the documentation
 
 ## 0.3.0
 - Works with ArangoDB versions below 2.2
