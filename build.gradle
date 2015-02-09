@@ -1,4 +1,7 @@
 
+// to insert the version string into the es-plugin.properties file
+import org.apache.tools.ant.filters.*
+
 // build script
 buildscript {
 	repositories {
@@ -31,7 +34,7 @@ targetCompatibility = 1.7
 // basic infos
 description = 'ElasticSearch River plugin for ArangoDB'
 group       = 'com.arangodb.elasticsearch'
-version     = '1.0.0.rc1'
+version     = '1.0.0.rc2'
 
 // extra configuration for integration tests
 configurations {
@@ -112,6 +115,11 @@ publishing {
 			}
 		}
 	}
+}
+
+// insert version string into es-plugin.properties
+processResources {
+	expand(project.properties)
 }
 
 // normal unit tests
@@ -238,4 +246,13 @@ afterEvaluate {
 
 	tasks.intTest.dependsOn('startArangoDb')
 	tasks.intTest.finalizedBy('stopArangoDb')
+
+	task intTestSetupAndSleep {
+		dependsOn startElasticSearch
+		dependsOn startArangoDb
+		finalizedBy stopElasticSearch
+		finalizedBy stopArangoDb
+	} << {
+		Thread.sleep(Long.MAX_VALUE)
+	}
 }
