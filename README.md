@@ -158,6 +158,12 @@ The following script will filter your data due to their availability flags:
 
 This script checks the "available" flag, and it changes the operation to "SKIP" for the given document context. This document will not be indexed. Please note that, if the document is already indexed, this will mean it won't be updated or deleted.
 
+# TODO
+
+* extend integration test:
+  * stop river, make a change in arangodb, must not be reflected in ES anymore
+  * start river again, should pick up where we stopped *or* start 'now' which means we've lost the last update
+
 # Development & Contributing
 
 If you want to change and test something, the basic development process is simple:
