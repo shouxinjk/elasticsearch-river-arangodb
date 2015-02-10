@@ -27,12 +27,15 @@ public class CollectionCheck extends BaseState {
 
 	private final WalClient client;
 	private final String collectionName;
+	private final long initialTick;
+	private boolean firstRun = true;
 
 	@Inject
 	public CollectionCheck(StateMachine stateMachine, ArangoDbConfig config, WalClient client) {
 		super(stateMachine, config, COLLECTION_CHECK);
 		this.client = client;
 		collectionName = config.getArangodbCollection();
+		initialTick = config.getArangodbInitialTick();
 	}
 
 	@Override
@@ -67,8 +70,12 @@ public class CollectionCheck extends BaseState {
 			boolean found = findCollection(inventory);
 			if (found) {
 				long tick = extractTick(inventory);
+				if (firstRun) {
+					tick = initialTick;
+				}
 
-				LOG.info("Collection {} found, using tick {}", collectionName, tick);
+				LOG.info("Collection {} found, using tick {} (firstRun = {})", collectionName, tick, firstRun);
+				firstRun = false;
 
 				sleep.resetErrorCount();
 

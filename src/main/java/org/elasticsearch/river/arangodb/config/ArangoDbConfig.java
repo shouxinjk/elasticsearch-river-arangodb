@@ -2,6 +2,7 @@ package org.elasticsearch.river.arangodb.config;
 
 import static net.swisstech.swissarmyknife.lang.Integers.positive;
 import static net.swisstech.swissarmyknife.lang.Longs.positive;
+import static net.swisstech.swissarmyknife.lang.Longs.zeroOrPositive;
 import static net.swisstech.swissarmyknife.lang.Strings.notBlank;
 import static net.swisstech.swissarmyknife.net.TCP.validPortNumber;
 import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
@@ -32,6 +33,7 @@ public class ArangoDbConfig {
 	private final String arangodbCollection;
 	private final String arangodbScript;
 	private final String arangodbScripttype;
+	private final long arangodbInitialTick;
 	private final long arangodbReaderMinSleep;
 	private final long arangodbReaderMaxSleep;
 	private final String arangodbCredentialsUsername;
@@ -63,6 +65,7 @@ public class ArangoDbConfig {
 		arangodbScripttype = notBlank(rsw.getString("arangodb.script_type", "js"));
 
 		// arangodb.options
+		arangodbInitialTick = zeroOrPositive(rsw.getLong("arangodb.initial_tick", 0L));
 		arangodbReaderMinSleep = positive(rsw.getTimeValue("arangodb.reader_min_sleep", timeValueMillis(100)).millis());
 		arangodbReaderMaxSleep = positive(rsw.getTimeValue("arangodb.reader_max_sleep", timeValueMillis(10_000)).millis());
 
@@ -122,6 +125,10 @@ public class ArangoDbConfig {
 
 	public String getArangodbScripttype() {
 		return arangodbScripttype;
+	}
+
+	public long getArangodbInitialTick() {
+		return arangodbInitialTick;
 	}
 
 	public long getArangodbReaderMinSleep() {

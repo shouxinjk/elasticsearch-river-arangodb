@@ -13,7 +13,7 @@ This is an ElasticSearch plugin that will connect to your ArangoDB server, read 
 
 | ArangoDB River Plugin | ArangoDB                                         | ElasticSearch |
 |-----------------------|--------------------------------------------------|---------------|
-| 1.0.0.rc2             | 2.2 and higher                                   | 1.4.x         |
+| 1.0.0.rc3             | 2.2 and higher                                   | 1.4.x         |
 | 0.3.0                 | up to 2.2 ( and higher if old replog is running) | 1.4.x         |
 | 0.2.0                 | 1.4.0                                            | 1.0.0         |
 | 0.1.0-alpha           | 1.4.0                                            | 0.90.5        |
@@ -31,7 +31,7 @@ The zip file contains all necessary dependencies and nothing else is needed to i
 ```
 /usr/share/elasticsearch/bin/plugin \
     --install arangodb \
-    --url https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/1.0.0.rc2/elasticsearch-river-arangodb-1.0.0.rc2.zip
+    --url https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/1.0.0.rc3/elasticsearch-river-arangodb-1.0.0.rc3.zip
 ```
 
 ## install from file (after manual download)
@@ -39,7 +39,7 @@ The zip file contains all necessary dependencies and nothing else is needed to i
 ```
 /usr/share/elasticsearch/bin/plugin \
     --install arangodb \
-    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-1.0.0.rc2.zip
+    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-1.0.0.rc3.zip
 ```
 
 ## Manual install
@@ -49,7 +49,7 @@ To install manually, unzip the archive into the ES plugins directory see: 'paths
 ```
 $ cd <ES plugins directory>
 $ find . -type f
-./arangodb/elasticsearch-river-arangodb-1.0.0.rc2.jar
+./arangodb/elasticsearch-river-arangodb-1.0.0.rc3.jar
 ./arangodb/... more jars (dependencies of the plugin) ...
 ```
 
@@ -183,7 +183,7 @@ This software is licensed under the Apache 2 license, see the supplied LICENSE f
 
 # Changelog
 
-## 1.0.0.rc2
+## 1.0.0.rc3
 - Works with ArangoDB versions of 2.2 and higher
 - Uses the Write-Ahead-Log and is *not* compatible with ArangoDB versions below 2.2
 - This is a complete rewrite of the existing code
