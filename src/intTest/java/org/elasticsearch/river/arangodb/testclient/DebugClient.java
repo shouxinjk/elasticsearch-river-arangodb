@@ -33,7 +33,6 @@ public class DebugClient {
 	private static final MediaType MEDIATYPE_JSON = notNull(MediaType.parse("application/json; charset=utf-8"));
 
 	public static void startRiver(String arangoDb, String arangoCollection, String arangoHost, int arangoPort, String riverName, String esHost, int esPort, String indexName, String indexType) throws IOException {
-
 		Meta meta = Meta.create(arangoDb, arangoCollection, arangoHost, arangoPort, indexName, indexType);
 		String json = MAPPER.writeValueAsString(meta);
 		LOG.debug("Sending Request to ES: %s", json);
@@ -53,7 +52,6 @@ public class DebugClient {
 		if (code != 200) {
 			fail("deleting collection in arangodb failed: " + MAPPER.writeValueAsString(dcrsp));
 		}
-
 	}
 
 	public static void createCollection(String host, int port, String db, String collectionName) throws IOException {
