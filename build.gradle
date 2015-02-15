@@ -34,7 +34,7 @@ targetCompatibility = 1.7
 // basic infos
 description = 'ElasticSearch River plugin for ArangoDB'
 group       = 'com.arangodb.elasticsearch'
-version     = '1.0.0.rc3'
+version     = '1.0.0.rc4'
 
 // extra configuration for integration tests
 configurations {

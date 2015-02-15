@@ -72,30 +72,41 @@ public class ArangoDbRiver extends AbstractRiverComponent implements River {
 			config.getIndexType() //
 			);
 
-		try {
-			client.admin().indices().prepareCreate(config.getIndexName()).get();
-		}
-		catch (Exception e) {
-			if (ExceptionsHelper.unwrapCause(e) instanceof IndexAlreadyExistsException) {
-				logger.info("index [{}] already exists", e, config.getIndexName());
-			}
-			else if (ExceptionsHelper.unwrapCause(e) instanceof ClusterBlockException) {
-				logger.info("cluster block exception for index [{}]", e, config.getIndexName());
-			}
-			else {
-				logger.error("failed to create index [{}], disabling river...", e, config.getIndexName());
-				// TODO: shouldn't we throw some exception to let ES know an error has happened?
-				return;
-			}
-		}
+		// lazy init, have the start method return as fast as possible
+		// trying this because my ES freezes up on EC2 and the twitter
+		// river seems to have a similar problem:
+		// https://github.com/elasticsearch/elasticsearch-river-twitter/issues/83
+		new Thread("ArangoDbRiverInitializer") {
 
-		walReaderThread = walReaderThreadFactory.newThread(walReaderRunnable);
-		walReaderThread.start();
+			@Override
+			public void run() {
 
-		indexWriterThread = indexWriterThreadFactory.newThread(indexWriterRunnable);
-		indexWriterThread.start();
+				try {
+					client.admin().indices().prepareCreate(config.getIndexName()).get();
+				}
+				catch (Exception e) {
+					if (ExceptionsHelper.unwrapCause(e) instanceof IndexAlreadyExistsException) {
+						logger.info("index [{}] already exists", e, config.getIndexName());
+					}
+					else if (ExceptionsHelper.unwrapCause(e) instanceof ClusterBlockException) {
+						logger.info("cluster block exception for index [{}]", e, config.getIndexName());
+					}
+					else {
+						logger.error("failed to create index [{}], disabling river...", e, config.getIndexName());
+						// TODO: shouldn't we throw some exception to let ES know an error has happened?
+						return;
+					}
+				}
 
-		logger.info("started arangodb river");
+				walReaderThread = walReaderThreadFactory.newThread(walReaderRunnable);
+				walReaderThread.start();
+
+				indexWriterThread = indexWriterThreadFactory.newThread(indexWriterRunnable);
+				indexWriterThread.start();
+
+				logger.info("started arangodb river");
+			}
+		}.start();
 	}
 
 	@Override
