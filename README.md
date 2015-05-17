@@ -11,12 +11,13 @@ This is an ElasticSearch plugin that will connect to your ArangoDB server, read 
 
 # Version Compatibility
 
-| ArangoDB River Plugin | ArangoDB                                         | ElasticSearch |
-|-----------------------|--------------------------------------------------|---------------|
-| 1.0.0.rc4             | 2.2 and higher                                   | 1.4.x         |
-| 0.3.0                 | up to 2.2 ( and higher if old replog is running) | 1.4.x         |
-| 0.2.0                 | 1.4.0                                            | 1.0.0         |
-| 0.1.0-alpha           | 1.4.0                                            | 0.90.5        |
+| ArangoDB River Plugin | ArangoDB                                         | ElasticSearch  |
+|-----------------------|--------------------------------------------------|----------------|
+| 1.0.1                 | 2.6 and higher                                   | 1.4 and higher |
+| 1.0.0.rc4             | 2.2 and higher                                   | 1.4 and higher |
+| 0.3.0                 | up to 2.2 ( and higher if old replog is running) | 1.4.x          |
+| 0.2.0                 | 1.4.0                                            | 1.0.0          |
+| 0.1.0-alpha           | 1.4.0                                            | 0.90.5         |
 
 The ArangoDB river artifact is named `elasticsearch-river-arangodb-<version>.jar`.
 
