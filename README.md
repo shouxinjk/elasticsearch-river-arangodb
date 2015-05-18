@@ -32,7 +32,7 @@ The zip file contains all necessary dependencies and nothing else is needed to i
 ```
 /usr/share/elasticsearch/bin/plugin \
     --install arangodb \
-    --url https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/1.0.0.rc4/elasticsearch-river-arangodb-1.0.0.rc4.zip
+    --url https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/1.0.1/elasticsearch-river-arangodb-1.0.1.zip
 ```
 
 ## install from file (after manual download)
@@ -40,7 +40,7 @@ The zip file contains all necessary dependencies and nothing else is needed to i
 ```
 /usr/share/elasticsearch/bin/plugin \
     --install arangodb \
-    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-1.0.0.rc4.zip
+    --url file:///${HOME}/Downloads/elasticsearch-river-arangodb-1.0.1.zip
 ```
 
 ## Manual install
@@ -50,7 +50,7 @@ To install manually, unzip the archive into the ES plugins directory see: 'paths
 ```
 $ cd <ES plugins directory>
 $ find . -type f
-./arangodb/elasticsearch-river-arangodb-1.0.0.rc4.jar
+./arangodb/elasticsearch-river-arangodb-1.0.1.jar
 ./arangodb/... more jars (dependencies of the plugin) ...
 ```
 
