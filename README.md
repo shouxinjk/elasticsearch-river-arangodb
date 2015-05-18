@@ -184,7 +184,12 @@ This software is licensed under the Apache 2 license, see the supplied LICENSE f
 
 # Changelog
 
+## 1.0.1
+
+- uses new version 1.1.8 or arangodb-wal-client, which supports new properties of the write ahead log that are introduced in arangodb 2.6
+
 ## 1.0.0.rc4
+
 - Works with ArangoDB versions of 2.2 and higher
 - Uses the Write-Ahead-Log and is *not* compatible with ArangoDB versions below 2.2
 - This is a complete rewrite of the existing code
@@ -192,15 +197,18 @@ This software is licensed under the Apache 2 license, see the supplied LICENSE f
 - The configuration and featureset is slightly different. Existing users please carefully re-read the documentation
 
 ## 0.3.0
+
 - Works with ArangoDB versions below 2.2
 - Works with ArangoDB versions of 2.2 and higher if the legacy Replication Logger is enabled
 - Update all dependencies to latest versions (ElasticSearch 1.4.x)
 - Complete Refactoring, Cleanups, Simplifications
 
 ## 0.2.0
+
 - Minor changes for ElasticSearch v1.0.0.
 
 ## 0.1.0-alpha
+
 - Initial alpha version.
 - Supports script filters.
 - Using Apache HTTP standard components.
