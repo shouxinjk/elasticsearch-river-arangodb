@@ -86,7 +86,7 @@ test {
 
 // task to generate wrapper
 task wrapper(type: Wrapper) {
-	gradleVersion = '2.4'
+	gradleVersion = '2.7'
 }
 
 // create distribution zip
