@@ -13,7 +13,7 @@ This is an ElasticSearch plugin that will connect to your ArangoDB server, read 
 
 | Release | ArangoDB Version | ElasticSearch built | ElasticSearch integration-tested |
 |---------|------------------|---------------------|----------------------------------|
-| 1.0.1   | 2.6.x, 2.7.x     | 1.4.2               | 1.4 through 1.7                  |
+| 1.0.1   | 2.[6-8].x        | 1.4.2               | 1.4 through 1.7                  |
 
 * _ElasticSearch built_ is the ES version against which the release was built
 * _ElasticSearch integration-tested_ are the ES versions against which the integration tests work
