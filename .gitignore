@@ -3,3 +3,6 @@ bin
 build
 target
 test-output
+elasticsearch-river-arangodb.iml
+elasticsearch-river-arangodb.ipr
+elasticsearch-river-arangodb.iws
