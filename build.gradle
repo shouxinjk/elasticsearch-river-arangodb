@@ -165,6 +165,7 @@ task('jacocoIntTestReport', type: JacocoReport) {
 afterEvaluate {
 
 	task('startArangoDb') << {
+		println "ls -lah /var/lib/arangodb-apps".execute().text
 		project.ext.arangodb_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
 			.launch([
 				'/usr/sbin/arangod',
@@ -173,6 +174,7 @@ afterEvaluate {
 				'--log.file'          , '+'
 			], null)
 			.waitForOpenPorts([ project.arangoDbPort ], 10000)
+		println ">>> arangodb ready for operation"
 	}
 
 	task('stopArangoDb') << {
