@@ -13,10 +13,10 @@ before_script:
   - wget -qO - https://www.arangodb.com/repositories/arangodb2/xUbuntu_12.04/Release.key | sudo apt-key add -
   - wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch                  | sudo apt-key add -
   - echo 'deb https://www.arangodb.com/repositories/arangodb2/xUbuntu_12.04/ /'          | sudo tee -a /etc/apt/sources.list
-  - echo 'deb http://packages.elasticsearch.org/elasticsearch/1.7/debian stable main'    | sudo tee -a /etc/apt/sources.list
+  - echo 'deb http://packages.elasticsearch.org/elasticsearch/2.x/debian stable main'    | sudo tee -a /etc/apt/sources.list
   - sudo apt-get -q update
   - sudo apt-get -q install arangodb=2.8.5
-  - sudo apt-get -q install elasticsearch=1.7.5
+  - sudo apt-get -q install elasticsearch=2.2.1
   - sudo service arangodb stop
   - sudo service elasticsearch stop
 
