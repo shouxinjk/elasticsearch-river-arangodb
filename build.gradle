@@ -165,10 +165,11 @@ task('jacocoIntTestReport', type: JacocoReport) {
 afterEvaluate {
 
 	task('startArangoDb') << {
-		println "ls -lah /var/lib/arangodb-apps".execute().text
 		project.ext.arangodb_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
 			.launch([
 				'/usr/sbin/arangod',
+				'--server.uid arangodb',
+				'--server.gid arangodb',
 				'--server.endpoint'   , "tcp://127.0.0.1:${project.arangoDbPort}",
 				'--database.directory', "${project.arangoDataDir}/data",
 				'--log.file'          , '+'
