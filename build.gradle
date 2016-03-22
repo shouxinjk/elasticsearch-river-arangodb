@@ -58,8 +58,8 @@ ext.versions = [
 	, arangodb_wal_client: '1.1.8'
 	, jackson            : '1.9.13'
 	, swissarmyknife     : '1.2.2'
-	, logback_classic    : '1.1.2'
-	, testng             : '6.8.17'
+	, logback_classic    : '1.1.6'
+	, testng             : '6.9.10'
 	, mockito            : '1.10.19'
 ]
 
