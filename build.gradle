@@ -168,10 +168,9 @@ afterEvaluate {
 		project.ext.arangodb_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
 			.launch([
 				'/usr/sbin/arangod',
-				'--server.uid', 'arangodb',
-				'--server.gid', 'arangodb',
 				'--server.endpoint'   , "tcp://127.0.0.1:${project.arangoDbPort}",
 				'--database.directory', "${project.arangoDataDir}/data",
+				'--javascript.app-path', "${project.arangoDataDir}/jsapps",
 				'--log.file'          , '+'
 			], null)
 			.waitForOpenPorts([ project.arangoDbPort ], 10000)
