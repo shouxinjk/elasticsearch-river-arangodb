@@ -10,3 +10,4 @@ TODO / Refactorings
   * compare with [c code](https://github.com/triAGENS/ArangoDB/blob/master/arangod/VocBase/replication-common.h) and rename/split if necessary so it's correct. also, parsing should be moved out of ReplogEntity.
 * Testing
   * Install ArangoDB + ES + Plugin and run integration tests
+  * Proper Travis Matrix Build with various ADB/ES versions we want to be compatible with
