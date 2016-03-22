@@ -165,10 +165,6 @@ task('jacocoIntTestReport', type: JacocoReport) {
 afterEvaluate {
 
 	task('startArangoDb') << {
-		def dataDir = new File(project.arangoDataDir + "/data");
-		if (!dataDir.mkdirs()) {
-			println ">>> couldn't create directory ${dataDir.absolutePath}, build will probably fail"
-		}
 		project.ext.arangodb_process = net.swisstech.swissarmyknife.sys.linux.BackgroundProcess
 			.launch([
 				'/usr/sbin/arangod',
