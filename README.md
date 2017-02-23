@@ -29,7 +29,7 @@ The zip file contains all necessary dependencies and nothing else is needed to i
 ```
 /usr/share/elasticsearch/bin/plugin \
     --install arangodb \
-    --url https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/1.0.1/elasticsearch-river-arangodb-1.0.1.zip
+    --url https://github.com/arangodb/elasticsearch-river-arangodb/releases/download/v1.0.1/elasticsearch-river-arangodb-1.0.1.zip
 ```
 
 ## install from file (after manual download)
